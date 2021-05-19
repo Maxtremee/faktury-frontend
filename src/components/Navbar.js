@@ -89,7 +89,7 @@ export default function MenuAppBar({ history }) {
               href='/invoices'
               className={classes.menuItem}
             >
-              Faktrury
+              Faktury
             </Button>
           </div>
           <div className={classes.lastItem}>
