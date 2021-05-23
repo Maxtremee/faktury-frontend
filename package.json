@@ -30,7 +30,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "api": "openapi-generator-cli generate -g javascript -i openapi.yaml -o ./api-sdk"
   },
   "eslintConfig": {
     "extends": [
