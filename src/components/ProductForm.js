@@ -10,69 +10,14 @@ import {
 } from '@material-ui/core'
 import { login } from '../actions/userActions'
 import TextField from '@material-ui/core/TextField'
-import {
-  addProduct,
-  getProductDetails,
-  editProduct,
-} from '../actions/productActions'
-const AddNewProductScreen = ({ history }) => {
-  const dispatch = useDispatch()
-  const { loading, error, editedProduct } = useSelector(
-    (state) => state.products
-  )
-  const [name, setName] = useState('')
-  const [tax, setTax] = useState('')
-  const [price, setPrice] = useState('')
-  const [unit, setUnit] = useState('szt.')
-  const [buttonText, setButtonText] = useState('Zapisz produkt')
-  const [edit, setEdit] = useState(false)
-  const handleSubmit = () => {
-    if (edit) {
-      dispatch(
-        editProduct({
-          id: editedProduct.id,
-          name,
-          tax: parseInt(tax),
-          price: parseFloat(price),
-          currency: 'PLN',
-          unit,
-        })
-      )
-      setEdit(false)
-      setButtonText('Zapisz produkt')
-    } else {
-      dispatch(
-        addProduct({
-          name,
-          tax: parseInt(tax),
-          price: parseFloat(price),
-          unit,
-        })
-      )
-    }
-    history.push('/products')
-  }
-  useEffect(() => {
-    const [lastItem] = history.location.pathname.split('/').slice(-1)
-    console.log(lastItem)
-    if (lastItem.length > 18) {
-      setEdit(true)
-      dispatch(getProductDetails(lastItem))
-    } else {
-      setEdit(false)
-      setButtonText('Zapisz produkt')
-    }
-  }, [])
-  useEffect(() => {
-    if (editedProduct && editedProduct.name) {
-      console.log('edit')
-      setName(editedProduct.name)
-      setTax(editedProduct.tax)
-      setPrice(editedProduct.price)
-      setUnit(editedProduct.unit)
-      setButtonText('Edytuj produkt')
-    }
-  }, [editedProduct, dispatch])
+
+const ProductForm = (props) => {
+  const [name, setName] = useState(props.name ? props.name : '')
+  const [tax, setTax] = useState(props.tax ? props.tax : '')
+  const [price, setPrice] = useState(props.price ? props.price : '')
+  const [unit, setUnit] = useState(props.unit ? props.unit : 'szt.')
+  const [buttonText, setButtonText] = useState(props.buttonText ? props.buttonText : 'Zapisz produkt')
+
   return (
     <div>
       <Container
@@ -122,7 +67,7 @@ const AddNewProductScreen = ({ history }) => {
           className='mt-1'
           variant='outlined'
           color='primary'
-          onClick={handleSubmit}
+          onClick={props.handleSubmit}
         >
           {buttonText}
         </Button>
@@ -131,4 +76,4 @@ const AddNewProductScreen = ({ history }) => {
   )
 }
 
-export default AddNewProductScreen
+export default ProductForm

@@ -12,8 +12,8 @@ import RegisterScreen from './screens/RegisterScreen'
 import PageNotFoundScreen from './screens/PageNotFoundScreen'
 import AccessDeniedScreen from './screens/AccessDeniedScreen'
 import HomeScreen from './screens/HomeScreen'
-import ClientScreen from './screens/ClientScreen'
-import AddClientScreen from './screens/AddClientScreen'
+import ContractorScreen from './screens/ContractorScreen'
+import AddContractorScreen from './screens/AddContractorScreen'
 import ProductScreen from './screens/ProductScreen'
 import HistoryScreen from './screens/HistoryScreen'
 import InvoiceScreen from './screens/InvoiceScreen'
@@ -44,11 +44,18 @@ const App = () => {
               <Route path='/invoices' component={InvoiceScreen} exact />
               <Route path='/invoices/add' component={AddInvoiceScreen} exact />
 
-              <Route path='/clients' component={ClientScreen} exact />
-              <Route path='/clients/add' component={AddClientScreen} exact />
+              <Route path='/contractors' component={ContractorScreen} exact />
+              <Route path='/contractors/add' component={AddContractorScreen} exact />
+              <Route path='/contractors/:id' component={AddContractorScreen} exact />
+              
 
               <Route path='/products' component={ProductScreen} exact />
               <Route path='/products/add' component={AddProductScreen} exact />
+              <Route
+                path='/products/:id'
+                component={AddProductScreen}
+                exact
+              />
 
               <Route path='/login' component={LoginScreen} />
               <Route path='/register' component={RegisterScreen} />

@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-import { useDispatch } from 'react-redux'
-
+import React, { useState, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { addContractor, editContractor, getContractorDetails } from '../actions/contractorActions'
 import {
   Button,
   TextField,
@@ -11,9 +11,9 @@ import {
   FormControlLabel,
   FormLabel,
 } from '@material-ui/core'
-const AddNewClientScreen = ({ history }) => {
+const AddContractorScreen = ({ history }) => {
   const dispatch = useDispatch()
-
+  const {loading, error, editedContractor } = useSelector(state => state.contractors)
   const [name, setName] = useState('')
   const [surname, setSurname] = useState('')
   const [businessName, setBusinessName] = useState('')
@@ -24,22 +24,87 @@ const AddNewClientScreen = ({ history }) => {
   const [city, setCity] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [email, setEmail] = useState('')
-
+  const [accountNumber, setAccountNumber] = useState('')
+  const [bankName, setBankName] = useState('')
   const [clientType, setClientType] = useState('business')
+  const [edit, setEdit] = useState(false)
+  const [buttonText, setButtonText] = useState('Dodaj kontrahenta')
 
+  const debug = () => {
+    setStreet('Cegelniana 13')
+    setBusinessName('FH Wrobel')
+    setNip('1231313312')
+    setCity('Krakow')
+    setPostalCode('23-131')
+    setEmail('test@test.com')
+    setPhoneNumber('123 133 123')
+    setAccountNumber('PL12 3123 1231 3133 1233 1231 1231')
+    setBankName('Pekao')
+  }
+
+  useEffect(() => {
+    const [lastItem] = history.location.pathname.split('/').slice(-1)
+    console.log(lastItem)
+    if (lastItem.length > 18) {
+      setEdit(true)
+      dispatch(getContractorDetails(lastItem))
+    } else {
+      setEdit(false)
+      setButtonText('Zapisz kontrahenta')
+    }
+  }, [])
+  useEffect(() => {
+    if (editedContractor && editedContractor.name) {
+      console.log('edit')
+      setName(editedContractor.name)
+      setSurname(editedContractor.surname)
+      setEmail(editedContractor.email)
+      setPhoneNumber(editedContractor.phoneNumber)
+      setAccountNumber(editedContractor.accountNumber)
+      setBankName(editedContractor.bankName)
+      setStreet(editedContractor.street)
+      setBusinessName(editedContractor.businessName)
+      setNip(editedContractor.nip)
+      setCity(editedContractor.city)
+      setPostalCode(editedContractor.postalCode)
+
+      setButtonText('Edytuj kontrahenta')
+    }
+  }, [editedContractor, dispatch])
   const handleSubmit = () => {
-    // dispatch(addClient({
-    //   name,
-    //   surname,
-    //   businessName,
-    //   nip,
-    //   street,
-    //   postalCode,
-    //   city,
-    //   phoneNumber,
-    //   email
-    // }))
-    // history.push('/clients')
+    if(edit) {
+      dispatch(editContractor({
+        // name,
+        // surname,
+        id: editedContractor.id,
+        name: businessName,
+        nip,
+        firstAddressLine: `${street}, ${postalCode} ${city}`,
+        secondAddressLine: ``,
+        info: `${phoneNumber !== '' ? 'tel. ' + phoneNumber : ''}, ${
+          email !== '' ? 'email: ' + email : ''
+        }`,
+        bankName: ``,
+        bankAccountNumber: ``,
+      }))
+    } else {
+      dispatch(
+        addContractor({
+          // name,
+          // surname,
+          name: businessName,
+          nip,
+          firstAddressLine: `${street}, ${postalCode} ${city}`,
+          secondAddressLine: ``,
+          info: `${phoneNumber !== '' ? 'tel. ' + phoneNumber : ''}, ${
+            email !== '' ? 'email: ' + email : ''
+          }`,
+          bankName: ``,
+          bankAccountNumber: ``,
+        })
+      )
+    }
+    history.push('/contractors')
   }
   return (
     <div>
@@ -51,7 +116,7 @@ const AddNewClientScreen = ({ history }) => {
           spacing: '10px',
         }}
       >
-        <FormControl component='fieldset'>
+        <FormControl component='fieldset' margin='normal'>
           <FormLabel component='legend'>Rodzaj klienta</FormLabel>
           <RadioGroup
             row
@@ -75,18 +140,18 @@ const AddNewClientScreen = ({ history }) => {
         {clientType === 'private' ? (
           <div>
             <TextField
-              className='mt-1'
               fullWidth
               label='Imię'
               variant='outlined'
+              margin='normal'
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
             <TextField
-              className='mt-1'
               fullWidth
               label='Nazwisko'
               variant='outlined'
+              margin='normal'
               value={surname}
               onChange={(e) => setSurname(e.target.value)}
             />
@@ -94,17 +159,17 @@ const AddNewClientScreen = ({ history }) => {
         ) : (
           <div>
             <TextField
-              className='mt-1'
               fullWidth
               label='Nazwa firmy'
               variant='outlined'
+              margin='normal'
               value={businessName}
               onChange={(e) => setBusinessName(e.target.value)}
             />
             <TextField
-              className='mt-1'
+              margin='normal'
               fullWidth
-              label='VAT'
+              label='NIP'
               variant='outlined'
               value={nip}
               onChange={(e) => setNip(e.target.value)}
@@ -113,7 +178,7 @@ const AddNewClientScreen = ({ history }) => {
         )}
 
         <TextField
-          className='mt-1'
+          margin='normal'
           fullWidth
           label='Ulica i nr.domu'
           variant='outlined'
@@ -121,7 +186,7 @@ const AddNewClientScreen = ({ history }) => {
           onChange={(e) => setStreet(e.target.value)}
         />
         <TextField
-          className='mt-1'
+          margin='normal'
           fullWidth
           label='Kod pocztowy'
           variant='outlined'
@@ -129,7 +194,7 @@ const AddNewClientScreen = ({ history }) => {
           onChange={(e) => setPostalCode(e.target.value)}
         />
         <TextField
-          className='mt-1'
+          margin='normal'
           fullWidth
           label='Miasto'
           variant='outlined'
@@ -137,7 +202,7 @@ const AddNewClientScreen = ({ history }) => {
           onChange={(e) => setCity(e.target.value)}
         />
         <TextField
-          className='mt-1'
+          margin='normal'
           fullWidth
           label='Numer telefonu'
           variant='outlined'
@@ -145,7 +210,7 @@ const AddNewClientScreen = ({ history }) => {
           onChange={(e) => setPhoneNumber(e.target.value)}
         />
         <TextField
-          className='mt-1'
+          margin='normal'
           fullWidth
           label='Adres email'
           variant='outlined'
@@ -153,17 +218,19 @@ const AddNewClientScreen = ({ history }) => {
           onChange={(e) => setEmail(e.target.value)}
         />
         <Button
-          className='mt-1'
+          margin='normal'
           variant='outlined'
           color='primary'
           onClick={handleSubmit}
         >
-          {' '}
           Dodaj klienta
+        </Button>
+        <Button variant='outlined' onClick={debug}>
+          FILL DEBUG
         </Button>
       </Container>
     </div>
   )
 }
 
-export default AddNewClientScreen
+export default AddContractorScreen

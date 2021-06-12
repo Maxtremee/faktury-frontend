@@ -1,17 +1,13 @@
 import React from 'react'
+import {useDispatch} from 'react-redux'
 import { makeStyles } from '@material-ui/core/styles'
 import AppBar from '@material-ui/core/AppBar'
 import Toolbar from '@material-ui/core/Toolbar'
 import Typography from '@material-ui/core/Typography'
-import IconButton from '@material-ui/core/IconButton'
-import MenuIcon from '@material-ui/icons/Menu'
-import AccountCircle from '@material-ui/icons/AccountCircle'
-import Switch from '@material-ui/core/Switch'
-import FormControlLabel from '@material-ui/core/FormControlLabel'
-import FormGroup from '@material-ui/core/FormGroup'
-import MenuItem from '@material-ui/core/MenuItem'
-import Menu from '@material-ui/core/Menu'
-import { Link, Button, Divider } from '@material-ui/core'
+
+import { Button } from '@material-ui/core'
+import {logout} from '../actions/userActions'
+import { withRouter } from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -38,22 +34,35 @@ const useStyles = makeStyles((theme) => ({
   },
 }))
 
-export default function MenuAppBar({ history }) {
+
+
+const MenuAppBar = ({ history }) => {
+  const dispatch = useDispatch()
   const classes = useStyles()
   const [auth, setAuth] = React.useState(true)
-  const [anchorEl, setAnchorEl] = React.useState(null)
-  const open = Boolean(anchorEl)
 
-  const handleChange = (event) => {
-    setAuth(event.target.checked)
-  }
+  const handleButtonClick = pageURL => {
+    history.push(pageURL);
+  };
+  
+  const menuItems = [
+    {
+      menuTitle: "Produkty",
+      pageURL: "/products"
+    },
+    {
+      menuTitle: "Klienci",
+      pageURL: "/contractors"
+    },
+    {
+      menuTitle: "Faktury",
+      pageURL: "/invoices"
+    },
+    
+  ];
 
-  const handleMenu = (event) => {
-    setAnchorEl(event.currentTarget)
-  }
-
-  const handleClose = () => {
-    setAnchorEl(null)
+  const handleLogout = () => {
+    dispatch(logout())
   }
 
   return (
@@ -64,33 +73,17 @@ export default function MenuAppBar({ history }) {
             Faktury
           </Typography>
           <div>
-            <Button
+            {menuItems.map(menuItem => (
+              <Button
               variant='contained'
               disableElevation
               color='primary'
-              href='/products'
+              onClick={() => handleButtonClick(menuItem.pageURL)}
               className={classes.menuItem}
             >
-              Produkty
+              {menuItem.menuTitle}
             </Button>
-            <Button
-              variant='contained'
-              disableElevation
-              color='primary'
-              href='/clients'
-              className={classes.menuItem}
-            >
-              Klienci
-            </Button>
-            <Button
-              variant='contained'
-              disableElevation
-              color='primary'
-              href='/invoices'
-              className={classes.menuItem}
-            >
-              Faktury
-            </Button>
+            ))}
           </div>
           <div className={classes.lastItem}>
             {auth ? (
@@ -99,7 +92,7 @@ export default function MenuAppBar({ history }) {
                   variant='contained'
                   disableElevation
                   color='primary'
-                  href='/profile'
+                  onClick={() => handleButtonClick('/profile')}
                 >
                   Profil
                 </Button>
@@ -107,7 +100,8 @@ export default function MenuAppBar({ history }) {
                   variant='contained'
                   disableElevation
                   color='primary'
-                  href='/logout'
+                  onClick={handleLogout}
+                  href='/login'
                 >
                   Wyloguj
                 </Button>
@@ -117,7 +111,7 @@ export default function MenuAppBar({ history }) {
                 variant='contained'
                 disableElevation
                 color='primary'
-                href='/login'
+                onClick={() => handleButtonClick('/login')}
               >
                 Zaloguj
               </Button>
@@ -128,3 +122,5 @@ export default function MenuAppBar({ history }) {
     </div>
   )
 }
+
+export default withRouter(MenuAppBar)

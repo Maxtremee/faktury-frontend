@@ -7,9 +7,12 @@ import {
   USER_LOGOUT
 } from '../constants/userConstants'
 
+import env from 'react-dotenv'
+import curlirize from 'axios-curlirize'
+
+curlirize(axios)
 
 
-// CLIENT
 export const login = ({ email, password }) => async (dispatch) => {
   try {
     dispatch({
@@ -18,24 +21,21 @@ export const login = ({ email, password }) => async (dispatch) => {
     const config = {
       headers: {
         'Content-Type': 'application/json',
-        'accept': 'application/json',
-        'Access-Control-Allow-Origin' : 'http://localhost:3000'
-        
+        'accept': 'application/json'
       },
     }
-    const body = `'${{email, password}}'`
     const { data } = await axios.post(
-      `https://faktury-backend.herokuapp.com/api/login`,
-      body,
+      `${env.API_URL}/login`,
+      JSON.stringify({login: email, password}),
       config
     )
+    console.log(data)
     dispatch({
       type: USER_LOGIN_SUCCESS,
       payload: data,
     })
     localStorage.setItem('userInfo', JSON.stringify(data))
   } catch (error) {
-    console.log(error)
     dispatch({
       type: USER_LOGIN_FAIL,
       payload:
@@ -45,6 +45,7 @@ export const login = ({ email, password }) => async (dispatch) => {
     })
   }
 }
+
 export const logout = () => (dispatch) => {
   localStorage.removeItem('userInfo')
   dispatch({ type: USER_LOGOUT })
