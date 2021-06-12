@@ -9,28 +9,84 @@ import {
   EDIT_CONTRACTOR_REQUEST,
   EDIT_CONTRACTOR_SUCCESS,
   EDIT_CONTRACTOR_FAIL,
-} from '../constants/contractorConstants';
+  GET_CONTRACTORS_REQUEST,
+  GET_CONTRACTORS_SUCCESS,
+  GET_CONTRACTORS_FAIL,
+  GET_CONTRACTOR_DETAILS_REQUEST,
+  GET_CONTRACTOR_DETAILS_SUCCESS,
+  GET_CONTRACTOR_DETAILS_FAIL,
+} from '../constants/contractorConstants'
 
+export const getContractors = () => async (dispatch, getState) => {
+  try {
+    dispatch({
+      type: GET_CONTRACTORS_REQUEST,
+    })
+    const { userInfo } = getState().userLogin
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${userInfo.accessToken}`,
+      },
+    }
+    const { data } = await axios.get(
+      `${window.env.API_URL}/contractor/?searchstr=`,
+      config
+    )
+    dispatch({
+      type: GET_CONTRACTORS_SUCCESS,
+      payload: data,
+    })
+  } catch (error) {
+    dispatch({
+      type: GET_CONTRACTORS_FAIL,
+      payload:
+        error.response && error.response.data.message
+          ? error.response.data.message
+          : error.message,
+    })
+  }
+}
 
-export const addContractor = (contractorData) => async (dispatch) => {
+export const getContractorDetails = (contractorId) => async(dispatch, getState) => {
+  dispatch({
+    type: GET_CONTRACTOR_DETAILS_REQUEST
+  })
+  try {
+    const {contractors} = getState().contractors
+    const contractor = contractors.filter(c => c.id === contractorId)[0]
+
+    dispatch({
+      type: GET_CONTRACTOR_DETAILS_SUCCESS,
+      payload: contractor
+    })
+  } catch (error) {
+    dispatch({
+      type: GET_CONTRACTOR_DETAILS_FAIL,
+      payload:
+        error.response && error.response.data.message
+          ? error.response.data.message
+          : error.message,
+    })
+  }
+}
+
+export const addContractor = (contractorData) => async (dispatch, getState) => {
   try {
     dispatch({
       type: ADD_CONTRACTOR_REQUEST,
     })
+    const { userInfo } = getState().userLogin
     const config = {
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${userInfo.accessToken}`,
       },
     }
-    const { data } = await axios.post(
-      '/api/contractors',
-      contractorData,
-      config
-    )
-    console.log(data)
+    await axios.post(`${window.env.API_URL}/contractor`, contractorData, config)
     dispatch({
       type: ADD_CONTRACTOR_SUCCESS,
-      payload: data,
+      payload: contractorData,
     })
   } catch (error) {
     dispatch({
@@ -43,63 +99,67 @@ export const addContractor = (contractorData) => async (dispatch) => {
   }
 }
 
-
-export const editContractor = (contractorData) => async (dispatch) => {
-  try {
-    dispatch({
-      type: EDIT_CONTRACTOR_REQUEST,
-    })
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+export const editContractor =
+  (contractorData) => async (dispatch, getState) => {
+    try {
+      dispatch({
+        type: EDIT_CONTRACTOR_REQUEST,
+      })
+      const { userInfo } = getState().userLogin
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${userInfo.accessToken}`,
+        },
+      }
+      await axios.put(
+        `${window.env.API_URL}/contractor/${contractorData.id}`,
+        contractorData,
+        config
+      )
+      dispatch({
+        type: EDIT_CONTRACTOR_SUCCESS,
+        payload: contractorData,
+      })
+    } catch (error) {
+      dispatch({
+        type: EDIT_CONTRACTOR_FAIL,
+        payload:
+          error.response && error.response.data.message
+            ? error.response.data.message
+            : error.message,
+      })
     }
-    const { data } = await axios.put(
-      `/api/contractors/${contractorData.id}`,
-      contractorData,
-      config
-    )
-    dispatch({
-      type: EDIT_CONTRACTOR_SUCCESS,
-      payload: data,
-    })
-  } catch (error) {
-    dispatch({
-      type: EDIT_CONTRACTOR_FAIL,
-      payload:
-        error.response && error.response.data.message
-          ? error.response.data.message
-          : error.message,
-    })
   }
-}
 
-
-export const deleteContractor = (contractorId) => async (dispatch) => {
-  try {
-    dispatch({
-      type: DELETE_CONTRACTOR_REQUEST,
-    })
-    const config = {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+export const deleteContractor =
+  (contractorId) => async (dispatch, getState) => {
+    try {
+      dispatch({
+        type: DELETE_CONTRACTOR_REQUEST,
+      })
+      const { userInfo } = getState().userLogin
+      const config = {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${userInfo.accessToken}`,
+        },
+      }
+      await axios.delete(
+        `${window.env.API_URL}/contractor/${contractorId}`,
+        config
+      )
+      dispatch({
+        type: DELETE_CONTRACTOR_SUCCESS,
+        payload: contractorId,
+      })
+    } catch (error) {
+      dispatch({
+        type: DELETE_CONTRACTOR_FAIL,
+        payload:
+          error.response && error.response.data.message
+            ? error.response.data.message
+            : error.message,
+      })
     }
-    const { data } = await axios.delete(
-      `/api/contractors/${contractorId}`,
-      config
-    )
-    dispatch({
-      type: DELETE_CONTRACTOR_SUCCESS,
-      payload: data,
-    })
-  } catch (error) {
-    dispatch({
-      type: DELETE_CONTRACTOR_FAIL,
-      payload:
-        error.response && error.response.data.message
-          ? error.response.data.message
-          : error.message,
-    })
   }
-}

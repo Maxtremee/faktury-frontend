@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Dropdown } from 'react-bootstrap'
+import { Dropdown, Container } from 'react-bootstrap'
+
 import {
   Button,
-  IconButton,
   Table,
   TableBody,
   TableCell,
@@ -11,11 +11,13 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Divider,
+  IconButton,
 } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles'
-import { getProducts, deleteProduct } from '../actions/productActions'
 import DeleteIcon from '@material-ui/icons/Delete'
 import EditIcon from '@material-ui/icons/Edit'
+import { getContractors, deleteContractor } from '../actions/contractorActions'
 
 const useStyles = makeStyles({
   table: {
@@ -26,74 +28,63 @@ const useStyles = makeStyles({
   },
 })
 
-const ProductScreen = ({ history }) => {
+const ContractorScreen = ({ history }) => {
   const dispatch = useDispatch()
-  const { products, loading, error } = useSelector((state) => state.products)
-
+  const { contractors, loading, error } = useSelector(
+    (state) => state.contractors
+  )
   useEffect(() => {
-    dispatch(getProducts())
+    dispatch(getContractors())
   }, [])
-
   const classes = useStyles()
 
-  const productDetails = (productId) => {
-    //TODO disptach
-    console.log(productId)
+  const handleAdd = () => {
+    history.push('/contractors/add')
   }
-
-  const addNewProduct = () => {
-    history.push('/products/add')
-  }
-
-  const handleDelete = (index) => {
-    const id = products[index].id
-    console.log(`deeting to delete ${id}`)
-    dispatch(deleteProduct(id))
-  }
-
   const handleEdit = (index) => {
-    const id = products[index].id
-    history.push(`/products/${id}`)
+    const id = contractors[index].id
+    history.push(`/contractors/${id}`)
   }
-
+  const handleDelete = (index) => {
+    console.log(contractors[index])
+    const id = contractors[index].id
+    dispatch(deleteContractor(id))
+  }
   return (
-    <div style={{ width: '80%', marginLeft: 'auto', marginRight: 'auto' }}>
+    <div style={{ width: '80%', marginRight: 'auto', marginLeft: 'auto' }}>
       <Button
         variant='outlined'
         disableElevation
         color='primary'
-        onClick={addNewProduct}
+        onClick={handleAdd}
         className={classes.buttons}
         style={{ marginBottom: '20px' }}
       >
-        Stwórz nowy produkt
+        Dodaj nowego kontrahenta
       </Button>
-
       <TableContainer component={Paper}>
         <Table className={classes.table} aria-label='simple table'>
           <TableHead>
             <TableRow>
-              <TableCell align='center'>Nazwa produktu</TableCell>
-              <TableCell align='center'>Cena netto</TableCell>
-              <TableCell align='center'>VAT</TableCell>
-              <TableCell align='center'>Cena brutto</TableCell>
-              <TableCell align='left'></TableCell>
+              <TableCell align='center'> Nazwa </TableCell>
+              <TableCell align='center'>NIP</TableCell>
+              <TableCell align='center'>Email</TableCell>
+              <TableCell align='center'>Nr. telefonu</TableCell>
+              <TableCell align='center'></TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {products &&
-              products.map((product, index) => (
+            {contractors &&
+              contractors.map((contractor, index) => (
                 <TableRow key={index}>
-                  <TableCell align='center'>{product.name}</TableCell>
-                  <TableCell align='center'>
-                    {parseFloat(product.price).toFixed(2)}
+                  <TableCell>
+                    {contractor.surname
+                      ? `${contractor.name} ${contractor.surname}`
+                      : `${contractor.name}`}
                   </TableCell>
-                  <TableCell align='center'>{product.tax}%</TableCell>
-                  <TableCell align='center'>
-                    {parseFloat(
-                      product.price + (product.price * product.tax) / 100
-                    ).toFixed(2)}
-                  </TableCell>
+                  <TableCell align='center'>{contractor.nip}</TableCell>
+                  <TableCell align='center'>{contractor.email}</TableCell>
+                  <TableCell align='center'>{contractor.phone}</TableCell>
                   <TableCell align='center'>
                     <div>
                       <IconButton
@@ -119,4 +110,4 @@ const ProductScreen = ({ history }) => {
   )
 }
 
-export default ProductScreen
+export default ContractorScreen

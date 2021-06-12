@@ -3,10 +3,12 @@ import thunk from 'redux-thunk'
 import { composeWithDevTools } from 'redux-devtools-extension'
 import { eventReducer } from './reducers/eventReducers'
 import { userLoginReducer } from './reducers/userReducers'
-import {contractorReducer } from './reducers/contractorReducers'
+import { contractorReducer } from './reducers/contractorReducers'
+import { productReducer } from './reducers/productReducer'
 const reducer = combineReducers({
   userLogin: userLoginReducer,
-  contractors: contractorReducer
+  contractors: contractorReducer,
+  products: productReducer,
 }) //all reducers combined
 
 const userInfoFromStorage = localStorage.getItem('userInfo')

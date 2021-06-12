@@ -20,20 +20,20 @@ import FormControl from '@material-ui/core/FormControl'
 const LoginScreen = ({ history, location }) => {
 
   const dispatch = useDispatch()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('email@email.com')
+  const [password, setPassword] = useState('password123')
   const [showInfoModal, setShowInfoModal] = useState('')
   const userLogin = useSelector((state) => state.userLogin)
   const { loading, error, userInfo } = userLogin
   const redirect = location.search ? location.search.split('=')[1] : '/'
   const [showPassword, setShowPassword] = useState(false)
-  // useEffect(() => {
-  //   if (userInfo && redirect) {
-  //     history.push(redirect)
-  //   } else if (userInfo) {
-  //     history.push('/')
-  //   }
-  // }, [history, userInfo, redirect])
+  useEffect(() => {
+    if (userInfo && redirect) {
+      history.push(redirect)
+    } else if (userInfo) {
+      history.push('/')
+    }
+  }, [history, userInfo, redirect])
 
   useEffect(() => {
     if (error != null) {
