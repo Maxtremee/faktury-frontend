@@ -1,12 +1,12 @@
 import React from 'react'
-import {useDispatch} from 'react-redux'
+import { useDispatch } from 'react-redux'
 import { makeStyles } from '@material-ui/core/styles'
 import AppBar from '@material-ui/core/AppBar'
 import Toolbar from '@material-ui/core/Toolbar'
 import Typography from '@material-ui/core/Typography'
 
 import { Button } from '@material-ui/core'
-import {logout} from '../actions/userActions'
+import { logout } from '../actions/userActions'
 import { withRouter } from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
@@ -47,16 +47,16 @@ const MenuAppBar = ({ history }) => {
   
   const menuItems = [
     {
+      menuTitle: "Faktury",
+      pageURL: "/invoices"
+    },
+    {
       menuTitle: "Produkty",
       pageURL: "/products"
     },
     {
       menuTitle: "Klienci",
       pageURL: "/contractors"
-    },
-    {
-      menuTitle: "Faktury",
-      pageURL: "/invoices"
     },
     
   ];

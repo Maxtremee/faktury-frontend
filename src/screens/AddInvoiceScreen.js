@@ -1,6 +1,19 @@
 import React, { useState, forwardRef, useEffect } from 'react'
-import { ListGroup, Table, Form, Row, Col, Container } from 'react-bootstrap'
+import { useDispatch, useSelector } from 'react-redux'
+import { ListGroup, Form, Row, Col, Container } from 'react-bootstrap'
 import {
+  Fab,
+  Grid,
+  makeStyles,
+  Modal,
+  Tooltip,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
   TextField,
   MenuItem,
   Select,
@@ -14,109 +27,79 @@ import {
   FormLabel,
   OutlinedInput,
   InputLabel,
-  Divider
+  Divider,
 } from '@material-ui/core'
-import {BankFormat, FloatNumbers, NipFormat} from '../utils/numberFormat'
+import {
+  BankFormat,
+  PhoneNumberFormat,
+  PostalCodeFormat,
+  FloatNumbers,
+  NipFormat,
+} from '../utils/numberFormat'
+import { getContractors } from '../actions/contractorActions'
+import { getProducts } from '../actions/productActions'
+import { createInvoice, getInvoiceDetails } from '../actions/invoiceActions'
 import AddIcon from '@material-ui/icons/Add'
 import DeleteIcon from '@material-ui/icons/Delete'
+import EditIcon from '@material-ui/icons/Edit'
+import NoteAddIcon from '@material-ui/icons/NoteAdd'
 import { Autocomplete } from '@material-ui/lab'
 import dayjs from 'dayjs'
-const user = {
-  name: 'Firma Handlowa Michał Wróbel',
-  nip: '0000000000',
-  street: 'Głodna 420',
-  postalCode: '23-413',
-  city: 'Obsza',
-  bankAccountNuber: '1234 1234 1234 1234 00',
-  bankName: 'PEKAO',
-}
-
-const privateClients = [
-  {
-    name: 'Marcin',
-    surname: 'Surmacz',
-    street: 'Szybka 10',
-    postalCode: '10-100',
-    city: 'Warszawa',
-  },
-  {
-    name: 'Jarek',
-    surname: 'Granda',
-    street: 'Długa 10',
-    postalCode: '11-123',
-    city: 'Gdańsk',
-  },
-]
-
-const businessClients = [
-  {
-    businessName: 'FH SLUP',
-    nip: '0013130013',
-    street: 'Wybuchowa 13',
-    postalCode: '31-133',
-    city: 'Poznań',
-  },
-  {
-    businessName: 'FH KANIBAL',
-    nip: '33311223311',
-    street: 'Smaczna 11',
-    postalCode: '21-133',
-    city: 'Madagaskar',
-  },
-]
-
-const userData = {
-  businessName: 'FH Sprzedawcy',
-  nip: '0013130013',
-  street: 'Ulica 13',
-  postalCode: '21-313',
-  city: 'Zamch',
-  sellerAccount: '13231313123131',
-  sellerBank: 'PKO BP',
-}
-
-const products = [
-  {
-    name: 'Porzeczka czarna',
-    vat: 8,
-    unit: 'kg',
-    netPrice: 4,
-  },
-  {
-    name: 'Porzeczka czerwona',
-    vat: 23,
-    unit: 'kg',
-    netPrice: 1.5,
-  },
-]
 
 const invoicesToday = 4
+const useStyles = makeStyles((theme) => ({
+  paper: {
+    position: 'absolute',
+    width: 400,
+    backgroundColor: theme.palette.background.paper,
+    border: '1px solid #000',
+    boxShadow: theme.shadows[5],
+    padding: theme.spacing(2, 4, 3),
+  },
+  modal: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fabDown: {
+    margin: 0,
+    top: 'auto',
+    right: 20,
+    bottom: 70,
+    left: 'auto',
+    position: 'fixed',
+  },
+  fabUp: {
+    margin: 0,
+    top: 'auto',
+    right: 20,
+    bottom: 120,
+    left: 'auto',
+    position: 'fixed',
+  },
+}))
 
-const AddInvoiceScreen = () => {
-  const [invoiceNumber, setInvoiceNumber] = useState() // add default number based on current date
-  const [issueDate, setIssueDate] = useState(dayjs().format('YYYY-MM-DD')) // add default today
-  const [issuePlace, setIssuePlace] = useState(`${userData.city}`)
-  const [transactionDate, setTransactionDate] = useState(
-    dayjs().format('YYYY-MM-DD')
-  ) // add default today
-  // seller
-  const [sellerName, setSellerName] = useState(userData.businessName)
-  const [sellerNip, setSellerNip] = useState(userData.nip)
-  const [sellerStreet, setSellerStreet] = useState(userData.street)
-  const [sellerPostalCode, setSellerPostalCode] = useState(userData.postalCode)
-  const [sellerCity, setSellerCity] = useState(userData.city)
-  const [sellerAccount, setSellerAccount] = useState(userData.sellerAccount)
-  const [sellerBank, setSellerBank] = useState(userData.sellerBank)
+const AddInvoiceScreen = ({ history }) => {
+  const dispatch = useDispatch()
+  const { loading, error, editedInvoice } = useSelector(
+    (state) => state.invoices
+  )
+  const { company } = useSelector((state) => state.userLogin.userInfo)
+  const { contractors } = useSelector((state) => state.contractors)
+  const { products } = useSelector((state) => state.products)
+  const classes = useStyles()
 
+  useEffect(() => {
+    dispatch(getContractors())
+    dispatch(getProducts())
+  }, [])
+  
+  const [edit, setEdit] = useState(false)
+  const [buttonText, setButtonText] = useState('Zapisz produkt')
   //buyer
-  //buyer BUSINESS
-  const [buyerBusinessName, setBuyerBusinessName] = useState()
+  const [buyerId, setBuyerId] = useState()
   const [buyerNip, setBuyerNip] = useState()
-
-  //buyer PRIVATE
   const [buyerName, setBuyerName] = useState()
-  const [buyerSurname, setBuyerSurname] = useState()
-
   const [buyerStreet, setBuyerStreet] = useState()
   const [buyerPostalCode, setBuyerPostalCode] = useState()
   const [buyerCity, setBuyerCity] = useState()
@@ -124,100 +107,167 @@ const AddInvoiceScreen = () => {
   const [buyerBankName, setBuyerBankName] = useState()
   const [buyerPhoneNumber, setBuyerPhoneNumber] = useState()
   const [buyerEmail, setBuyerEmail] = useState()
+  
+  const [invoiceNumber, setInvoiceNumber] = useState() // add default number based on current date
+  const [issueDate, setIssueDate] = useState(dayjs().format('YYYY-MM-DD')) // add default today
+  const [issuePlace, setIssuePlace] = useState(`${company.address.city}`)
+  const [transactionDate, setTransactionDate] = useState(dayjs().format('YYYY-MM-DD'))
+  // seller
+  const [sellerName, setSellerName] = useState(company.name)
+  const [sellerNip, setSellerNip] = useState(company.nip)
+  const [sellerStreet, setSellerStreet] = useState(company.address.street)
+  const [sellerPostalCode, setSellerPostalCode] = useState(company.address.postalCode)
+  const [sellerCity, setSellerCity] = useState(company.address.city)
+  const [sellerAccount, setSellerAccount] = useState(company.bankAccountNumber)
+  const [sellerBank, setSellerBank] = useState(company.bankName)
+
+  useEffect(() => {
+    const [lastItem] = history.location.pathname.split('/').slice(-1)
+    if (lastItem.length > 18) {
+      setEdit(true)
+      dispatch(getInvoiceDetails(lastItem))
+    } else {
+      setEdit(false)
+      setButtonText('Zapisz produkt')
+    }
+  }, [])
+
+  useEffect(() => {
+    if (editedInvoice && editedInvoice.id) {
+      console.log('edit')
+      setBuyerName(editedInvoice.contractor.name)
+      setBuyerNip(editedInvoice.contractor.id)
+      setBuyerStreet(editedInvoice.contractor.address.street)
+      setBuyerPostalCode(editedInvoice.contractor.address.postalCode)
+      setBuyerCity(editedInvoice.contractor.address.city)
+      setBuyerPhoneNumber(editedInvoice.contractor.phoneNumber)
+      setBuyerEmail(editedInvoice.contractor.email)
+      setBuyerBankName(editedInvoice.contractor.bankName) 
+      setBuyerAccountNumber(editedInvoice.contractor.bankAccountNumber)
+      setButtonText('Edytuj produkt')
+    }
+  }, [editedInvoice, dispatch])
 
 
-  const [invoiceEntriesCounter, setInvoiceEntriesCounter] = useState(0)
+  // ! new
+
   const [invoiceEntries, setInvoiceEntries] = useState([])
   const [clientType, setClientType] = useState('business')
-  const [name, setName] = useState()
 
   const [buyerMore, setBuyerMore] = useState(false)
+  const [editUserData, setEditUserData] = useState(false)
+  const [availableProducts, setAvailableProducts] = useState([])
+  const [editBuyerData, setEditBuyerData] = useState(true)
+  const [showModal, setShowModal] = useState(false)
 
   const buyerAutocompleteRef = React.createRef()
 
-  const clearBuyerAutocomplete = () => {
-    buyerAutocompleteRef.current
-      .getElementsByClassName('MuiAutocomplete-clearIndicator')[0]
-      .click()
-    // buyerAutocompleteRef.current.blur()
+  
+  const handleModalOpen = () => {
+    setEditBuyerData(false)
+    setShowModal(true)
   }
+  const handleModalClose = () => {
+    setShowModal(false)
+  }
+  const [id, setId] = useState()
+  const [name, setName] = useState()
+  const [unit, setUnit] = useState()
+  const [tax, setTax] = useState()
+  const [netPrice, setNetPrice] = useState()
+  const [modalText, setModalText] = useState('Dodaj pozycje')
+  const [quantity, setQuantity] = useState()
+  const [netValue, setNetValue] = useState()
+  const [grossValue, setGrossValue] = useState()
 
-  const addNewInvoiceEntry = () => {
-    setInvoiceEntries([
-      ...invoiceEntries,
-      {
-        id: invoiceEntries.length,
-        // unit: 'szt.',
-        // vat: 8,
+  const setProductCompletion = (index) => {
+    const productData = products[index]
+    setId(productData.id)
+    setName(productData.name)
+    setUnit(productData.unit)
+    setTax(parseFloat(productData.tax))
+    setNetPrice(productData.price)
+  }
+  const addInvoice = () => {
+    let invoiceProducts = []
+    invoiceEntries.map((invoiceEntry) => {
+      invoiceProducts.push({
+        id: invoiceEntry.id,
+        name: invoiceEntry.name,
+        price: invoiceEntry.netPrice,
+        tax: invoiceEntry.tax,
+        currency: 'PLN',
+        unit: invoiceEntry.unit,
+        quantity: invoiceEntry.quantity,
+      })
+    })
+    let invoice = {
+      created: new Date(),
+      contractor: {
+        id: buyerId,
+        name: buyerName,
+        address: {
+          street: buyerStreet,
+          postalCode: buyerPostalCode,
+          city: buyerCity,
+        },
+        nip: buyerNip,
+        phoneNumber: buyerPhoneNumber,
+        email: buyerEmail,
+        bankName: buyerBankName,
+        bankAccountNumber: buyerAccountNumber,
       },
-    ])
+      title: invoiceNumber,
+      products: invoiceProducts,
+      issuePlace,
+      issueDate,
+      sellDate: transactionDate,
+      paymentDate: transactionDate,
+      paymentType: 'Płatność gotówką',
+    }
+    console.log(invoice)
+    dispatch(createInvoice(invoice))
   }
-
-  const changeInvoiceEntry = (newEntry) => {
-    let arr = [
-      ...invoiceEntries.map((invoice, idx) =>
-        invoice.id == newEntry.id ? newEntry : invoice
-      ),
-    ]
-    setInvoiceEntries(arr)
-  }
-
   const showInvoice = () => {
     console.log(invoiceEntries)
   }
 
+  const handleEdit = (index) => {
+    console.log(index)
+  }
+  const handleDelete = (index) => {
+    console.log(index)
+  }
   const removeInvoiceEntry = (index) => {
-    const arr = invoiceEntries.filter((invoice) => invoice.id == index)
+    let arr = invoiceEntries.filter((entry) => entry.id !== index)
     setInvoiceEntries(arr)
   }
-
-  const dateChanged = (e) => {
-    console.log(e)
-  }
-
-  const [selectedClient, setSelectedClient] = useState()
 
   const onClientTypeChange = (e) => {
     setClientType(e.target.value)
     setBuyerName('')
-    setBuyerSurname('')
-    setBuyerCity('')
-    setBuyerPostalCode('')
-    setBuyerStreet('')
-    setBuyerBusinessName('')
     setBuyerNip('')
-    clearBuyerAutocomplete()
+    setBuyerStreet('')
+    setBuyerPostalCode('')
+    setBuyerCity('')
+    setBuyerBankName('')
+    setBuyerAccountNumber('')
+    setBuyerPhoneNumber('')
+    setBuyerEmail('')
   }
 
-  const setCorpClientCompletion = (index) => {
-    let details = businessClients[index]
-    setBuyerNip(details.nip)
-    setBuyerStreet(details.street)
-    setBuyerPostalCode(details.postalCode)
-    setBuyerCity(details.city)
-  }
-
-  const setPrivateClientCompletion = (index) => {
-    let details = privateClients[index]
+  const setClientCompletion = (index) => {
+    let details = contractors[index]
+    setBuyerId(details.id)
     setBuyerName(details.name)
-    setBuyerSurname(details.surname)
-    setBuyerStreet(details.street)
-    setBuyerPostalCode(details.postalCode)
-    setBuyerCity(details.city)
-  }
-
-  const dispatch = () => {
-    console.log(
-      `${invoiceNumber} ${issueDate} ${issuePlace} ${transactionDate}`
-    )
-    console.log(sellerName)
-    console.log(sellerNip)
-    console.log(`${sellerStreet} ${sellerPostalCode} ${sellerCity}`)
-    console.log(sellerAccount)
-    console.log(sellerBank)
-    console.log(buyerName)
-    console.log(buyerNip)
-    console.log(`${buyerStreet} ${buyerPostalCode} ${buyerCity}`)
+    setBuyerNip(details.nip)
+    setBuyerStreet(details.address.street)
+    setBuyerPostalCode(details.address.postalCode)
+    setBuyerCity(details.address.city)
+    setBuyerBankName(details.bankName)
+    setBuyerAccountNumber(details.bankAccountNumber)
+    setBuyerPhoneNumber(details.phoneNumber)
+    setBuyerEmail(details.email)
   }
 
   const generateInvoiceNumber = () => {
@@ -225,560 +275,693 @@ const AddInvoiceScreen = () => {
     console.log(str1)
     setInvoiceNumber(`${invoicesToday}/${str1}`)
   }
-  const [buyerNameError, setBuyerNameError] = useState(false)
-  const [buyerSurnameError, setBuyerSurnameError] = useState(false)
-  const [buyerBusinessNameError, setBuyerBusinessError] = useState(false)
-  const [buyerNipError, setBuyerNipError] = useState(false)
 
-  const [buyerStreetError, setBuyerStreetError] = useState(false)
-  const [buyerPostalCodeError, setBuyerPostalCodeError] = useState(false)
-  const [buyerCityError, setBuyerCityError] = useState(false)
-
-  const [sellerBusinessNameError, setSellerBusinessError] = useState(false)
-  const [sellerNipError, setSellerNipError] = useState(false)
-
-  const [sellerStreetError, setSellerStreetError] = useState(false)
-  const [sellerPostalCodeError, setSellerPostalCodeError] = useState(false)
-  const [sellerCityError, setSellerCityError] = useState(false)
-  const [sellerAccountError, setSellerAccountError] = useState(false)
-  const [sellerBankError, setSellerBankError] = useState(false)
-
-  const validateData = () => {}
-
+  const calculateNewValues = () => {
+    setNetValue(quantity * netPrice)
+    setGrossValue(quantity * (netPrice + (netPrice * tax) / 100))
+  }
+  const addProductToInvoice = () => {
+    let newEntry = {
+      id,
+      name,
+      quantity,
+      netPrice,
+      unit,
+      tax,
+      netValue,
+      grossValue,
+    }
+    let newInvoiceEntries = [...invoiceEntries, newEntry]
+    setInvoiceEntries(newInvoiceEntries)
+    setId('')
+    setName('')
+    setQuantity('')
+    setNetPrice('')
+    setUnit('szt.')
+    setTax('')
+    setNetValue('')
+    setGrossValue('')
+    setShowModal(false)
+  }
   return (
     <>
-      <Form>
-        <ListGroup>
-          <ListGroup.Item>
-            <Row>
-              <Col>
-                <FormControl margin='normal' size='small' variant='outlined'>
-                  <InputLabel htmlFor='outlined-adornment-amount'>
-                    Numer faktury
-                  </InputLabel>
-                  <OutlinedInput
-                    value={invoiceNumber || ''}
-                    onChanged={(e) => setInvoiceNumber(e.target.value)}
-                    labelWidth={105}
-                    endAdornment={
-                      <InputAdornment position='end'>
-                        <AddIcon onClick={generateInvoiceNumber} />
-                      </InputAdornment>
-                    }
-                  />
-                </FormControl>
-              </Col>
-              <Col>
-                <TextField
-                  label='Data wystawienia'
-                  type='date'
-                  variant='outlined'
-                  margin='normal'
-                  size='small'
-                  value={issueDate}
-                  onChange={(e) => setIssueDate(e.target.value)}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Col>
-              <Col>
-                <TextField
-                  label='Miejsce wystawienia'
-                  margin='normal'
-                  variant='outlined'
-                  size='small'
-                  value={issuePlace || ''}
-                  onChange={(e) => setIssuePlace(e.target.value)}
-                />
-              </Col>
-              <Col>
-                <TextField
-                  label='Data sprzedaży'
-                  type='date'
-                  variant='outlined'
-                  margin='normal'
-                  size='small'
-                  value={transactionDate}
-                  onChange={(e) => setTransactionDate(e.target.value)}
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                />
-              </Col>
-            </Row>
-          </ListGroup.Item>
-          <ListGroup.Item>
-            <Container style={{ marginTop: '10px' }}>
-              <Row style={{ marginBottom: '5px' }}>
-                <Col md={5}>
-                  <h4>Sprzedawca</h4>
-                  <Table style={{ marginBottom: '0px' }}>
-                    <th></th>
-                  </Table>
+      <Fab
+        variant='extended'
+        size='medium'
+        color='primary'
+        className={classes.fabDown}
+        onClick={addInvoice}
+      >
+        <NoteAddIcon />
+        Wystaw fakturę
+      </Fab>
+      <Fab
+        variant='extended'
+        size='medium'
+        color='secondary'
+        className={classes.fabUp}
+        onClick={handleModalOpen}
+      >
+        <AddIcon />
+        Dodaj produkt
+      </Fab>
+      <Grid container alignItems='center' justify='center' spacing={8} xs={12}>
+        <Grid item>
+          <FormControl margin='normal' size='small' variant='outlined'>
+            <InputLabel htmlFor='outlined-adornment-amount'>
+              Numer faktury
+            </InputLabel>
+            <OutlinedInput
+              value={invoiceNumber || ''}
+              onChanged={(e) => setInvoiceNumber(e.target.value)}
+              labelWidth={105}
+              endAdornment={
+                <InputAdornment position='end'>
+                  <AddIcon onClick={generateInvoiceNumber} />
+                </InputAdornment>
+              }
+            />
+          </FormControl>
+        </Grid>
+        <Grid item>
+          <TextField
+            label='Data wystawienia'
+            type='date'
+            variant='outlined'
+            margin='normal'
+            size='small'
+            value={issueDate}
+            onChange={(e) => setIssueDate(e.target.value)}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Grid>
+        <Grid item>
+          <TextField
+            label='Miejsce wystawienia'
+            margin='normal'
+            variant='outlined'
+            size='small'
+            value={issuePlace || ''}
+            onChange={(e) => setIssuePlace(e.target.value)}
+          />
+        </Grid>
+        <Grid item>
+          <TextField
+            label='Data sprzedaży'
+            type='date'
+            variant='outlined'
+            margin='normal'
+            size='small'
+            value={transactionDate}
+            onChange={(e) => setTransactionDate(e.target.value)}
+            InputLabelProps={{
+              shrink: true,
+            }}
+          />
+        </Grid>
+      </Grid>
+      <Grid
+        container
+        xs={12}
+        justify='center'
+        alignContent='space-around'
+        spacing={6}
+        style={{ marginBottom: '5px' }}
+      >
+        <Grid item direction='column' xs={4}>
+          <h4>Sprzedawca</h4>
+          <Table style={{ marginBottom: '0px' }}>
+            <th></th>
+          </Table>
+          {editUserData ? (
+            <div>
+              <TextField
+                disabled={!editUserData}
+                fullWidth
+                label='Nazwa firmy'
+                margin='normal'
+                variant='outlined'
+                size='small'
+                value={sellerName}
+                onChange={(e) => setSellerName(e.target.value)}
+              />
+              <TextField
+                disabled={!editUserData}
+                fullWidth
+                label='NIP'
+                margin='normal'
+                variant='outlined'
+                size='small'
+                value={sellerNip}
+                onChange={(e) => setSellerNip(e.target.value)}
+                InputProps={{
+                  inputComponent: NipFormat,
+                }}
+              />
 
+              <TextField
+                disabled={!editUserData}
+                fullWidth
+                label='Ulica i nr. domu'
+                margin='normal'
+                variant='outlined'
+                size='small'
+                value={sellerStreet}
+                onChange={(e) => setSellerStreet(e.target.value)}
+              />
+              <Grid container spacing={4}>
+                <Grid item xs={4}>
                   <TextField
-                    fullWidth
-                    label='Nazwa firmy'
+                    disabled={!editUserData}
+                    label='Kod pocztowy'
                     margin='normal'
                     variant='outlined'
                     size='small'
-                    value={sellerName}
-                    onChange={(e) => setSellerName(e.target.value)}
+                    value={sellerPostalCode}
+                    onChange={(e) => setSellerPostalCode(e.target.value)}
                   />
+                </Grid>
+                <Grid item md={8}>
                   <TextField
+                    disabled={!editUserData}
                     fullWidth
-                    label='NIP'
+                    label='Miasto'
                     margin='normal'
                     variant='outlined'
                     size='small'
-                    value={sellerNip}
-                    onChange={(e) => setSellerNip(e.target.value)}
+                    value={sellerCity}
+                    onChange={(e) => setSellerCity(e.target.value)}
+                  />
+                </Grid>
+              </Grid>
+
+              <TextField
+                disabled={!editUserData}
+                fullWidth
+                label='Konto bankowe'
+                margin='normal'
+                variant='outlined'
+                size='small'
+                value={sellerAccount}
+                onChange={(e) => setSellerAccount(e.target.value)}
+                InputProps={{
+                  inputComponent: BankFormat,
+                }}
+              />
+              <TextField
+                disabled={!editUserData}
+                fullWidth
+                label='Nazwa banku'
+                margin='normal'
+                variant='outlined'
+                size='small'
+                value={sellerBank}
+                onChange={(e) => setSellerBank(e.target.value)}
+              />
+            </div>
+          ) : (
+            <div>
+              <Grid
+                direction='column'
+                alignItems='center'
+                justify='center'
+                container
+                xs={12}
+              >
+                <Grid container xs={12} style={{ marginTop: '2%' }}>
+                  <Grid xs={5} item>
+                    <h5>Nazwa</h5>
+                  </Grid>
+                  <Grid item xs={5}>
+                    <h4>{company.name}</h4>
+                  </Grid>
+                </Grid>
+                <Grid container xs={12} style={{ marginTop: '2%' }}>
+                  <Grid xs={5} item>
+                    <h5>Adres</h5>
+                  </Grid>
+                  <Grid item xs={5}>
+                    <h5>
+                      {company.address.street}
+                      {company.address.street.length != 0 ? ',' : ''}{' '}
+                      {company.address.postalCode} {company.address.city}
+                    </h5>
+                  </Grid>
+                </Grid>
+                <Grid container xs={12} style={{ marginTop: '2%' }}>
+                  <Grid xs={5} item>
+                    <h5>Numer telefonu</h5>
+                  </Grid>
+                  <Grid item xs={5}>
+                    <h5>
+                      {company.phoneNumber.length != 0 ? '+48' : ''}{' '}
+                      {company.phoneNumber}
+                    </h5>
+                  </Grid>
+                </Grid>
+                <Grid container xs={12} style={{ marginTop: '2%' }}>
+                  <Grid xs={5} item>
+                    <h5>Adres email</h5>
+                  </Grid>
+                  <Grid item xs={5}>
+                    <h5>{company.email}</h5>
+                  </Grid>
+                </Grid>
+              </Grid>
+            </div>
+          )}
+          <Button onClick={() => setEditUserData(!editUserData)}>
+            Edytuj dane firmy
+          </Button>
+        </Grid>
+        <Grid item direction='column' xs={4}>
+          <h4>Nabywca</h4>
+          <Table style={{ marginBottom: '0px' }}>
+            <th></th>
+          </Table>
+          {editBuyerData ? (
+            <div>
+              <FormControl component='fieldset'>
+                <FormLabel component='legend'>Rodzaj klienta</FormLabel>
+                <RadioGroup
+                  row
+                  aria-label='Rodzaj klienta'
+                  name='client-type'
+                  value={clientType}
+                  onChange={onClientTypeChange}
+                >
+                  <FormControlLabel
+                    value='business'
+                    control={<Radio />}
+                    label='Firma'
+                  />
+                  <FormControlLabel
+                    value='private'
+                    control={<Radio />}
+                    label='Prywanie'
+                  />
+                </RadioGroup>
+              </FormControl>
+              <Autocomplete
+                freeSolo
+                ref={buyerAutocompleteRef}
+                id='buyer-name'
+                options={
+                  contractors && contractors.map((option) => option.name)
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label={
+                      clientType === 'business'
+                        ? 'Nazwa firmy'
+                        : 'Nazwa klienta'
+                    }
+                    margin='normal'
+                    variant='outlined'
+                    size='small'
+                    value={buyerName}
+                  />
+                )}
+                onInput={(e) => setBuyerName(e.target.value)}
+                onChange={(e, _) =>
+                  e.target.className === 'MuiAutocomplete-option' &&
+                  setClientCompletion(e.target.dataset.optionIndex)
+                }
+              />
+              {clientType === 'business' && (
+                <TextField
+                  fullWidth
+                  label='NIP'
+                  margin='normal'
+                  variant='outlined'
+                  size='small'
+                  value={buyerNip || ''}
+                  onChange={(e) => setBuyerNip(e.target.value)}
+                  InputProps={{
+                    inputComponent: NipFormat,
+                  }}
+                />
+              )}
+              <TextField
+                fullWidth
+                label='Adres'
+                margin='normal'
+                variant='outlined'
+                size='small'
+                value={buyerStreet || ''}
+                onChange={(e) => setBuyerStreet(e.target.value)}
+              />
+
+              <Grid container spacing={3} direction='row'>
+                <Grid item xs={4}>
+                  <TextField
+                    fullWidth
+                    label='Kod pocztowy'
+                    margin='normal'
+                    variant='outlined'
+                    size='small'
+                    value={buyerPostalCode || ''}
+                    onChange={(e) => setBuyerPostalCode(e.target.value)}
                     InputProps={{
-                      inputComponent: NipFormat
+                      inputComponent: PostalCodeFormat,
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={8}>
+                  <TextField
+                    fullWidth
+                    label='Miasto'
+                    margin='normal'
+                    variant='outlined'
+                    size='small'
+                    value={buyerCity || ''}
+                    onChange={(e) => setBuyerCity(e.target.value)}
+                  />
+                </Grid>
+              </Grid>
+              <TextField
+                fullWidth
+                label='Numer konta'
+                margin='normal'
+                variant='outlined'
+                size='small'
+                value={buyerAccountNumber || ''}
+                onChange={(e) => setBuyerAccountNumber(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position='start'>PL</InputAdornment>
+                  ),
+                  inputComponent: BankFormat,
+                }}
+              />
+              <TextField
+                fullWidth
+                label='Nazwa banku'
+                margin='normal'
+                variant='outlined'
+                size='small'
+                value={buyerBankName || ''}
+                onChange={(e) => setBuyerBankName(e.target.value)}
+              />
+              {buyerMore && (
+                <div>
+                  <TextField
+                    fullWidth
+                    label='Numer telefonu'
+                    margin='normal'
+                    variant='outlined'
+                    size='small'
+                    value={buyerPhoneNumber || ''}
+                    onChange={(e) => setBuyerPhoneNumber(e.target.value)}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position='start'>+48</InputAdornment>
+                      ),
+                      inputComponent: PhoneNumberFormat,
                     }}
                   />
 
                   <TextField
                     fullWidth
-                    label='Ulica i nr. domu'
+                    label='Email'
+                    type='email'
                     margin='normal'
                     variant='outlined'
                     size='small'
-                    value={sellerStreet}
-                    onChange={(e) => setSellerStreet(e.target.value)}
+                    value={buyerEmail || ''}
+                    onChange={(e) => setBuyerEmail(e.target.value)}
                   />
-                  <Row>
-                    <Col md={5}>
-                      <TextField
-                        label='Kod pocztowy'
-                        margin='normal'
-                        variant='outlined'
-                        size='small'
-                        value={sellerPostalCode}
-                        onChange={(e) => setSellerPostalCode(e.target.value)}
-                      />
-                    </Col>
-                    <Col md={7}>
-                      <TextField
-                        fullWidth
-                        label='Miasto'
-                        margin='normal'
-                        variant='outlined'
-                        size='small'
-                        value={sellerCity}
-                        onChange={(e) => setSellerCity(e.target.value)}
-                      />
-                    </Col>
-                  </Row>
-
-                  <Row>
-                    <Col md={7}>
-                      <TextField
-                        fullWidth
-                        label='Konto bankowe'
-                        margin='normal'
-                        variant='outlined'
-                        size='small'
-                        value={sellerAccount}
-                        onChange={(e) => setSellerAccount(e.target.value)}
-                        InputProps={{
-                          inputComponent: BankFormat
-                        }}
-                      />
-                    </Col>
-                    <Col md={5}>
-                      <TextField
-                        label='Nazwa banku'
-                        margin='normal'
-                        variant='outlined'
-                        size='small'
-                        value={sellerBank}
-                        onChange={(e) => setSellerBank(e.target.value)}
-                      />
-                    </Col>
-                  </Row>
-                </Col>
-                <Col md={{ span: 5, offset: 2 }}>
-                  <h4>Nabywca</h4>
-                  <Table style={{ marginBottom: '0px' }}>
-                    <th></th>
-                  </Table>
-                  <FormControl component='fieldset'>
-                    <FormLabel component='legend'>Rodzaj klienta</FormLabel>
-                    <RadioGroup
-                      row
-                      aria-label='Rodzaj klienta'
-                      name='client-type'
-                      value={clientType}
-                      onChange={onClientTypeChange}
-                    >
-                      <FormControlLabel
-                        value='business'
-                        control={<Radio />}
-                        label='Firma'
-                      />
-                      <FormControlLabel
-                        value='private'
-                        control={<Radio />}
-                        label='Prywanie'
-                      />
-                    </RadioGroup>
-                  </FormControl>
-                  {clientType === 'business' ? (
-                    <>
-                      <Autocomplete
-                        freeSolo
-                        ref={buyerAutocompleteRef}
-                        id='buyer-name'
-                        options={businessClients.map(
-                          (option) => option.businessName
-                        )}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label='Nazwa Firmy'
-                            margin='normal'
-                            variant='outlined'
-                            size='small'
-
-                            //value={buyerBusinessName || ''}
-                          />
-                        )}
-                        onInput={(e) => setBuyerBusinessName(e.target.value)}
-                        onChange={(e, name) =>
-                          e.target.className == 'MuiAutocomplete-option' &&
-                          setCorpClientCompletion(e.target.dataset.optionIndex)
-                        }
-                      />
-
-                      <TextField
-                        fullWidth
-                        label='NIP'
-                        margin='normal'
-                        variant='outlined'
-                        size='small'
-                        value={buyerNip || ''}
-                        onChange={(e) => setBuyerNip(e.target.value)}
-                        InputProps={{
-                          inputComponent: NipFormat
-                        }}
-                      />
-                    </>
-                  ) : (
-                    <>
-                      <Autocomplete
-                        freeSolo
-                        ref={buyerAutocompleteRef}
-                        options={privateClients.map((option) => option.name)}
-                        renderInput={(params) => (
-                          <TextField
-                            {...params}
-                            label='Imię'
-                            margin='normal'
-                            variant='outlined'
-                            size='small'
-                            inputValue={buyerName || ''}
-                          />
-                        )}
-                        onInput={(e) => setBuyerName(e.target.value)}
-                        onChange={(e, name) =>
-                          e.target.className == 'MuiAutocomplete-option' &&
-                          setPrivateClientCompletion(
-                            e.target.dataset.optionIndex
-                          )
-                        }
-                      />
-
-                      <TextField
-                        fullWidth
-                        label='Nazwisko'
-                        margin='normal'
-                        variant='outlined'
-                        size='small'
-                        value={buyerSurname || ''}
-                        onChange={(e) => setBuyerSurname(e.target.value)}
-                      />
-                    </>
-                  )}
-                  <TextField
-                    fullWidth
-                    label='Ulica i nr.domu'
-                    margin='normal'
-                    variant='outlined'
-                    size='small'
-                    value={buyerStreet || ''}
-                    onChange={(e) => setBuyerStreet(e.target.value)}
-                  />
-
-                  <Row>
-                    <Col md={5}>
-                      <TextField
-                        fullWidth
-                        label='Kod pocztowy'
-                        margin='normal'
-                        variant='outlined'
-                        size='small'
-                        value={buyerPostalCode || ''}
-                        onChange={(e) => setBuyerPostalCode(e.target.value)}
-                      />
-                    </Col>
-                    <Col md={7}>
-                      <TextField
-                        fullWidth
-                        label='Miasto'
-                        margin='normal'
-                        variant='outlined'
-                        size='small'
-                        value={buyerCity || ''}
-                        onChange={(e) => setBuyerCity(e.target.value)}
-                      />
-                    </Col>
-                    {buyerMore && <Container>
-                    <TextField
-                      fullWidth
-                      label='Numer telefonu'
-                      margin='normal'
-                      variant='outlined'
-                      size='small'
-                      value={buyerPhoneNumber || ''}
-                      onChange={(e) => setBuyerPhoneNumber(e.target.value)}
-                    />
-                    
-                    <TextField
-                      fullWidth
-                      label='Email'
-                      type='email'
-                      margin='normal'
-                      variant='outlined'
-                      size='small'
-                      value={buyerEmail || ''}
-                      onChange={(e) => setBuyerEmail(e.target.value)}
-                    />
-                    <TextField
-                      fullWidth
-                      label='Numer konta'
-                      margin='normal'
-                      variant='outlined'
-                      size='small'
-                      value={buyerAccountNumber || ''}
-                      onChange={(e) => setBuyerAccountNumber(e.target.value)}
-                      InputProps={{
-                        inputComponent: BankFormat
-                      }}
-                    />
-                    <TextField
-                      fullWidth
-                      label='Nazwa banku'
-                      margin='normal'
-                      variant='outlined'
-                      size='small'
-                      value={buyerBankName || ''}
-                      onChange={(e) => setBuyerBankName(e.target.value)}
-                    />
-                    </Container>}
-                    
-                  </Row>
-                </Col>
-              </Row>
-              <Row>
-                <Col md={{ span: 5, offset: 7 }}>
+                </div>
+              )}
+              <Grid container direction='row'>
+                <Grid item>
                   <Button onClick={() => setBuyerMore(!buyerMore)}>
                     {!buyerMore ? 'Więcej' : 'Mniej'}
                   </Button>
-                </Col>
-              </Row>
-            </Container>
-          </ListGroup.Item>
-          <ListGroup.Item>
-            <h3>Pozycje na fakturze</h3>
-            <Divider />
-            <Form.Group>
-              {invoiceEntries &&
-                invoiceEntries.map((invoice, index) => (
-                  <InvoiceEntry
-                    index={index}
-                    data={invoice}
-                    remove={removeInvoiceEntry}
-                    change={changeInvoiceEntry}
+                </Grid>
+              </Grid>
+            </div>
+          ) : (
+            <Grid
+              direction='column'
+              alignItems='center'
+              justify='center'
+              container
+              xs={12}
+            >
+              <Grid container xs={12} style={{ marginTop: '2%' }}>
+                <Grid xs={5} item>
+                  <h5>Nazwa</h5>
+                </Grid>
+                <Grid item xs={5}>
+                  <h4>{buyerName}</h4>
+                </Grid>
+              </Grid>
+              <Grid container xs={12} style={{ marginTop: '2%' }}>
+                <Grid xs={5} item>
+                  <h5>Adres</h5>
+                </Grid>
+                <Grid item xs={5}>
+                  <h5>
+                    {buyerStreet ? `${buyerStreet},` : ''} {buyerPostalCode}{' '}
+                    {buyerCity}
+                  </h5>
+                </Grid>
+              </Grid>
+              <Grid container xs={12} style={{ marginTop: '2%' }}>
+                <Grid xs={5} item>
+                  <h5>Numer telefonu</h5>
+                </Grid>
+                <Grid item xs={5}>
+                  <h5>
+                    {buyerPhoneNumber ? '+48' : ''} {buyerPhoneNumber}
+                  </h5>
+                </Grid>
+              </Grid>
+              <Grid container xs={12} style={{ marginTop: '2%' }}>
+                <Grid xs={5} item>
+                  <h5>Adres email</h5>
+                </Grid>
+                <Grid item xs={5}>
+                  <h5>{buyerEmail}</h5>
+                </Grid>
+              </Grid>
+            </Grid>
+          )}
+          <Grid container justify='center' style={{ marginTop: '5%' }}>
+            <Button
+              variant='outlined'
+              onClick={() => setEditBuyerData(!editBuyerData)}
+            >
+              {editBuyerData ? 'Zawierdź dane klienta' : 'Edytuj dane klienta'}
+            </Button>
+          </Grid>
+        </Grid>
+      </Grid>
+      <Grid container xs={12} spacing={4} alignItems='center' justify='center'>
+        <Grid item xs={8}>
+          {invoiceEntries.length !== 0 ? (
+            <div>
+              <Grid container justify='center' xs={12}>
+                <h3>Faktura</h3>
+              </Grid>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell align='center'>Nazwa produktu</TableCell>
+                      <TableCell align='center'>Cena netto</TableCell>
+                      <TableCell align='center'>Ilość</TableCell>
+                      <TableCell align='center'>VAT</TableCell>
+                      <TableCell align='center'>Wartość netto</TableCell>
+                      <TableCell align='center'>Wartość brutto</TableCell>
+                      <TableCell align='left'></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {invoiceEntries &&
+                      invoiceEntries.map((entry, index) => (
+                        <TableRow key={index}>
+                          <TableCell align='center'>{entry.name}</TableCell>
+                          <TableCell align='center'>
+                            {entry.netPrice} zł
+                          </TableCell>
+                          <TableCell align='center'>
+                            <Grid>
+                              {entry.quantity} {entry.unit}
+                            </Grid>
+                          </TableCell>
+                          <TableCell align='center'>{entry.tax} %</TableCell>
+                          <TableCell align='center'>
+                            {entry.netValue} zł
+                          </TableCell>
+                          <TableCell align='center'>
+                            {entry.grossValue} zł
+                          </TableCell>
+                          <TableCell align='center'>
+                            <div>
+                              <Tooltip title='Edytuj'>
+                                <IconButton
+                                  aria-label='edit'
+                                  onClick={() => handleEdit(index)}
+                                >
+                                  <EditIcon />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title='Usuń'>
+                                <IconButton
+                                  aria-label='delete'
+                                  onClick={() => handleDelete(index)}
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </div>
+          ) : (
+            <Grid container justify='center' xs={12}>
+              <h3>Brak pozycji w fakturze</h3>
+            </Grid>
+          )}
+        </Grid>
+      </Grid>
+      <Modal
+        open={showModal}
+        onClose={handleModalClose}
+        className={classes.modal}
+      >
+        <div className={classes.paper}>
+          <Grid container alignItems='center' justify='center' xs={12}>
+            <Grid item>
+              <h3>{modalText}</h3>
+            </Grid>
+            <Grid item direction='column' xs={12}>
+              <Autocomplete
+                freeSolo
+                options={products.map((option) => option.name)}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label='Nazwa produktu'
+                    margin='normal'
+                    variant='outlined'
+                    size='small'
+                    // value={name || ''}
                   />
-                ))}
-            </Form.Group>
-          </ListGroup.Item>
-        </ListGroup>
-        <Button onClick={addNewInvoiceEntry}>Dodaj nową pozycję</Button>
-        <Button onClick={() => dispatch()}>DEBUG</Button>
-        <div></div>
-      </Form>
-    </>
-  )
-}
-
-
-
-
-
-const InvoiceEntry = ({ index, data, change, remove }) => {
-  const [name, setName] = useState(data.name)
-  const [quantity, setQuantity] = useState(data.quantity)
-  const [unit, setUnit] = useState(data.unit)
-  const [netPrice, setNetPrice] = useState(data.netPrice)
-  const [vat, setVat] = useState(data.vat)
-  const [netValue, setNetValue] = useState(data.netValue)
-  const [grossValue, setGrossValue] = useState(data.grossValue)
-  const [id] = useState(index)
-
-  const changeProductDetails = () => {
-    let newEntry = {
-      name,
-      quantity,
-      unit,
-      netPrice,
-      vat,
-      netValue,
-      grossValue,
-      id,
-    }
-    change(newEntry)
-  }
-
-  const setProductCompletion = (index) => {
-    const productData = products[index]
-    setName(productData.name)
-    setUnit(productData.unit)
-    setVat(productData.vat)
-    setNetPrice(productData.netPrice)
-  }
-
-  const calculateNewValues = () => {
-    changeProductDetails()
-    setNetValue(quantity * netPrice)
-    setGrossValue(quantity * (netPrice + (netPrice * vat) / 100))
-  }
-
-  return (
-    <Row style={{ marginBottom: '10px' }}>
-      <Col md={3}>
-        <Autocomplete
-          freeSolo
-          options={products.map((option) => option.name)}
-          renderInput={(params) => (
+                )}
+                // onInput={(e) => setName(e.target.value)}
+                onChange={(e, _) =>
+                  e.target.className === 'MuiAutocomplete-option' &&
+                  setProductCompletion(e.target.dataset.optionIndex)
+                }
+                // onBlur={changeProductDetails}
+              />
+            </Grid>
             <TextField
-              {...params}
-              label='Nazwa produktu'
+              fullWidth
+              label='Ilość'
               margin='normal'
               variant='outlined'
               size='small'
-              value={name || ''}
+              value={quantity || ''}
+              onChange={(e) => setQuantity(parseInt(e.target.value))}
+              onBlur={calculateNewValues}
             />
-          )}
-          onInput={(e) => setName(e.target.value)}
-          onChange={(e, name) =>
-            e.target.className == 'MuiAutocomplete-option' &&
-            setProductCompletion(e.target.dataset.optionIndex)
-          }
-          onBlur={changeProductDetails}
-        />
-      </Col>
-      <Col md={1}>
-        <TextField
-          fullWidth
-          label='Ilość'
-          margin='normal'
-          variant='outlined'
-          size='small'
-          value={quantity || ''}
-          onChange={(e) => setQuantity(parseInt(e.target.value))}
-          onBlur={calculateNewValues}
-        />
-      </Col>
-      <Col md={1}>
-        <FormControl fullWidth variant='outlined' margin='normal' size='small'>
-          <Select
-            labelId='Jednostka'
-            value={unit || ''}
-            onChange={(e) => setUnit(e.target.value)}
-            onBlur={changeProductDetails}
-          >
-            <MenuItem value={'szt.'}>szt.</MenuItem>
-            <MenuItem value={'kg'}>kg</MenuItem>
-          </Select>
-        </FormControl>
-      </Col>
-      <Col md={1}>
-        <TextField
-          fullWidth
-          label='Cena netto'
-          margin='normal'
-          type='text'
-          variant='outlined'
-          size='small'
-          value={(netPrice && netPrice.toFixed(2)) || ''}
-          InputProps={{
-            endAdornment: <InputAdornment position='end'>zł</InputAdornment>,
-            inputComponent: FloatNumbers
-          }}
-          onChange={(e) => setNetPrice(parseFloat(e.target.value))}
-          onBlur={calculateNewValues}
-        />
-      </Col>
-      <Col md={1}>
-        <FormControl fullWidth variant='outlined' margin='normal' size='small'>
-          <Select
-            labelId='VAT'
-            value={vat || ''}
-            onChange={(e) => setVat(e.target.value)}
-            onBlur={calculateNewValues}
-          >
-            <MenuItem value={8}>8%</MenuItem>
-            <MenuItem value={23}>23%</MenuItem>
-          </Select>
-        </FormControl>
-      </Col>
-      <Col md={2}>
-        <TextField
-          disabled
-          fullWidth
-          label='Wartość netto'
-          margin='normal'
-          variant='outlined'
-          size='small'
-          value={netValue && netValue.toFixed(2) || ''}
-          InputProps={{
-            endAdornment: <InputAdornment position='end'>zł</InputAdornment>,
-          }}
-          onChanged={(e) => setNetValue(e.target.value)}
-          onBlur={changeProductDetails}
-        />
-      </Col>
-      <Col md={2}>
-        <TextField
-          disabled
-          fullWidth
-          label='Wartość brutto'
-          margin='normal'
-          variant='outlined'
-          size='small'
-          value={grossValue && grossValue.toFixed(2) || ''}
-          InputProps={{
-            endAdornment: <InputAdornment position='end'>zł</InputAdornment>,
-          }}
-          onChanged={(e) => setGrossValue(e.target.value)}
-          onBlur={changeProductDetails}
-        />
-      </Col>
-      <Col md={1}>
-        <FormControl margin='normal'>
-          <IconButton
-            aria-label='delete'
-            color='primary'
-            onClick={() => remove(id)}
-          >
-            <DeleteIcon />
-          </IconButton>
-        </FormControl>
-      </Col>
-    </Row>
+            <FormControl
+              fullWidth
+              variant='outlined'
+              margin='normal'
+              size='small'
+            >
+              <Select
+                labelId='Jednostka'
+                value={unit || ''}
+                onChange={(e) => setUnit(e.target.value)}
+                // onBlur={changeProductDetails}
+              >
+                <MenuItem value={'szt.'}>szt.</MenuItem>
+                <MenuItem value={'kg'}>kg</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              label='Cena netto'
+              margin='normal'
+              type='text'
+              variant='outlined'
+              size='small'
+              value={netPrice && netPrice}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position='end'>zł</InputAdornment>
+                ),
+                inputComponent: FloatNumbers,
+              }}
+              onChange={(e) => setNetPrice(parseFloat(e.target.value))}
+              onBlur={calculateNewValues}
+            />
+            <FormControl
+              fullWidth
+              variant='outlined'
+              margin='normal'
+              size='small'
+            >
+              <Select
+                labelId='VAT'
+                value={tax || ''}
+                onChange={(e) => setTax(e.target.value)}
+                onBlur={calculateNewValues}
+              >
+                <MenuItem value={8}>8%</MenuItem>
+                <MenuItem value={23}>23%</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              disabled
+              fullWidth
+              label='Wartość netto'
+              margin='normal'
+              variant='outlined'
+              size='small'
+              value={(netValue && netValue.toFixed(2)) || ''}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position='end'>zł</InputAdornment>
+                ),
+              }}
+              onChanged={(e) => setNetValue(e.target.value)}
+              // onBlur={changeProductDetails}
+            />
+            <TextField
+              disabled
+              fullWidth
+              label='Wartość brutto'
+              margin='normal'
+              variant='outlined'
+              size='small'
+              value={(grossValue && grossValue.toFixed(2)) || ''}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position='end'>zł</InputAdornment>
+                ),
+              }}
+              onChanged={(e) => setGrossValue(e.target.value)}
+              // onBlur={changeProductDetails}
+            />
+            <Button onClick={addProductToInvoice}>Dodaj produkt</Button>
+          </Grid>
+        </div>
+      </Modal>
+    </>
   )
 }
 

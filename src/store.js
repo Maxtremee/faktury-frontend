@@ -5,10 +5,13 @@ import { eventReducer } from './reducers/eventReducers'
 import { userLoginReducer } from './reducers/userReducers'
 import { contractorReducer } from './reducers/contractorReducers'
 import { productReducer } from './reducers/productReducer'
+import { invoiceReducer } from './reducers/invoiceReducer'
+
 const reducer = combineReducers({
   userLogin: userLoginReducer,
   contractors: contractorReducer,
   products: productReducer,
+  invoices: invoiceReducer,
 }) //all reducers combined
 
 const userInfoFromStorage = localStorage.getItem('userInfo')

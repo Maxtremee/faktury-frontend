@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Dropdown, Container } from 'react-bootstrap'
 
 import {
+  Fab,
+  Tooltip,
+  CircularProgress,
   Button,
   Table,
   TableBody,
@@ -13,10 +15,12 @@ import {
   Paper,
   Divider,
   IconButton,
+  Grid,
 } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles'
 import DeleteIcon from '@material-ui/icons/Delete'
 import EditIcon from '@material-ui/icons/Edit'
+import AddIcon from '@material-ui/icons/Add'
 import { getContractors, deleteContractor } from '../actions/contractorActions'
 
 const useStyles = makeStyles({
@@ -25,6 +29,14 @@ const useStyles = makeStyles({
   },
   buttons: {
     marginRight: '20px',
+  },
+  fab: {
+    margin: 0,
+    top: 'auto',
+    right: 20,
+    bottom: 70,
+    left: 'auto',
+    position: 'fixed',
   },
 })
 
@@ -52,60 +64,106 @@ const ContractorScreen = ({ history }) => {
   }
   return (
     <div style={{ width: '80%', marginRight: 'auto', marginLeft: 'auto' }}>
-      <Button
-        variant='outlined'
-        disableElevation
-        color='primary'
+      <Fab
+        variant="extended"
+        size="medium"
+        color="primary"
+        className={classes.fab}
         onClick={handleAdd}
-        className={classes.buttons}
-        style={{ marginBottom: '20px' }}
       >
-        Dodaj nowego kontrahenta
-      </Button>
-      <TableContainer component={Paper}>
-        <Table className={classes.table} aria-label='simple table'>
-          <TableHead>
-            <TableRow>
-              <TableCell align='center'> Nazwa </TableCell>
-              <TableCell align='center'>NIP</TableCell>
-              <TableCell align='center'>Email</TableCell>
-              <TableCell align='center'>Nr. telefonu</TableCell>
-              <TableCell align='center'></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {contractors &&
-              contractors.map((contractor, index) => (
-                <TableRow key={index}>
-                  <TableCell>
-                    {contractor.surname
-                      ? `${contractor.name} ${contractor.surname}`
-                      : `${contractor.name}`}
-                  </TableCell>
-                  <TableCell align='center'>{contractor.nip}</TableCell>
-                  <TableCell align='center'>{contractor.email}</TableCell>
-                  <TableCell align='center'>{contractor.phone}</TableCell>
-                  <TableCell align='center'>
-                    <div>
-                      <IconButton
-                        aria-label='delete'
-                        onClick={() => handleDelete(index)}
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                      <IconButton
-                        aria-label='edit'
-                        onClick={() => handleEdit(index)}
-                      >
-                        <EditIcon />
-                      </IconButton>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+        <AddIcon />
+        Dodaj kontahenta 
+      </Fab>
+      {loading ? (
+        <div>
+          <h4>Ładowanie...</h4> <CircularProgress />
+        </div>
+      ) : (
+        <div>
+          {contractors && contractors.length != 0 ? (
+            <div>
+              <TableContainer component={Paper}>
+                <Table className={classes.table} aria-label='simple table'>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell align='center'> Nazwa </TableCell>
+                      <TableCell align='center'>NIP</TableCell>
+                      <TableCell align='center'>Adres</TableCell>
+                      <TableCell align='center'>Kontakt</TableCell>
+                      <TableCell align='center'></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {contractors.map((contractor, index) => (
+                      <TableRow key={index}>
+                        <TableCell align='center'>
+                          {contractor.surname
+                            ? `${contractor.name} ${contractor.surname}`
+                            : `${contractor.name}`}
+                        </TableCell>
+                        <TableCell align='center'>{contractor.nip}</TableCell>
+                        <TableCell align='center'>
+                          <div>
+                            <Grid container spacing={1}>
+                              <Grid item xs={12}>
+                                {contractor.address.street}
+                              </Grid>
+                            </Grid>
+                            <Grid container spacing={1}>
+                              <Grid item xs={12}>
+                                {contractor.address.postalCode}{' '}
+                                {contractor.address.city}
+                              </Grid>
+                            </Grid>
+                          </div>
+                        </TableCell>
+                        <TableCell align='center'>
+                          <div>
+                            <Grid container spacing={1}>
+                              <Grid item xs={12}>
+                                Numer telefonu: {contractor.phoneNumber}
+                              </Grid>
+                            </Grid>
+                            <Grid container spacing={1}>
+                              <Grid item xs={12}>
+                                Email: {contractor.email}
+                              </Grid>
+                            </Grid>
+                          </div>
+                        </TableCell>
+                        <TableCell align='center'>
+                          <div>
+                            <Tooltip title='Edytuj'>
+                              <IconButton
+                                aria-label='edit'
+                                onClick={() => handleEdit(index)}
+                              >
+                                <EditIcon />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title='Usuń'>
+                              <IconButton
+                                aria-label='delete'
+                                onClick={() => handleDelete(index)}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </div>
+          ) : (
+            <div>
+              <h3>Brak kontrahentów</h3>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

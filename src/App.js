@@ -11,38 +11,42 @@ import LoginScreen from './screens/LoginScreen'
 import RegisterScreen from './screens/RegisterScreen'
 import PageNotFoundScreen from './screens/PageNotFoundScreen'
 import AccessDeniedScreen from './screens/AccessDeniedScreen'
-import HomeScreen from './screens/HomeScreen'
 import ContractorScreen from './screens/ContractorScreen'
 import AddContractorScreen from './screens/AddContractorScreen'
 import ProductScreen from './screens/ProductScreen'
-import HistoryScreen from './screens/HistoryScreen'
 import InvoiceScreen from './screens/InvoiceScreen'
 import AddInvoiceScreen from './screens/AddInvoiceScreen'
-import ProfileScreen from './screens/ProfileScreen'
 import UserDetailsScreen from './screens/UserDetailsScreen'
-
+import InvalidTokenScreen from './screens/InvalidTokenScreen'
 import AddProductScreen from './screens/AddProductScreen'
 
 import Footer from './components/Footer'
 import Navbar from './components/Navbar'
 
-const App = () => {
+import createBrowserHistory from 'history/createBrowserHistory'
+
+export const history = createBrowserHistory({forceRefresh: true})
+
+export const App = () => {
   return (
     <>
-      <Router>
+      <Router history={history}>
         <header>
           <Navbar />
         </header>
         <main>
           <Container fluid style={{ marginTop: '80px' }}>
             <Switch>
-              <Route path='/' component={HomeScreen} exact />
+              <Route path='/' exact> 
+                <Redirect to='/invoices' />
+              </Route>
               <Route path='/test' component={TestScreen} exact />
 
               <Route path='/profile' component={UserDetailsScreen} exact />
 
               <Route path='/invoices' component={InvoiceScreen} exact />
               <Route path='/invoices/add' component={AddInvoiceScreen} exact />
+              <Route path='/invoices/:id' component={AddInvoiceScreen} exact />
 
               <Route path='/contractors' component={ContractorScreen} exact />
               <Route path='/contractors/add' component={AddContractorScreen} exact />
@@ -61,6 +65,7 @@ const App = () => {
               <Route path='/register' component={RegisterScreen} />
 
               <Route path='/403' component={AccessDeniedScreen} />
+              <Route path='/invalidtoken' component={InvalidTokenScreen} />
               <Route component={PageNotFoundScreen} />
             </Switch>
           </Container>
@@ -72,5 +77,3 @@ const App = () => {
     </>
   )
 }
-
-export default App
