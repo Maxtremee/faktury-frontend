@@ -74,7 +74,6 @@ export const registerAccount = (accountData) => async (dispatch) => {
       type: SIGNUP_SUCCESS,
       payload: accountData,
     })
-    localStorage.setItem('userInfo', JSON.stringify(data))
   } catch (error) {
     dispatch({
       type: SIGNUP_FAIL,
@@ -137,10 +136,9 @@ export const updateProfile = (userData) => async (dispatch, getState) => {
         Authorization: `Bearer ${userInfo.accessToken}`,
       },
     }
-
     let userProfile = {
       ...userData,
-      id: userInfo.id
+      id: userInfo.id,
     }
     await axios.put(
       `${env.API_URL}/change-personal-info`,
@@ -151,11 +149,7 @@ export const updateProfile = (userData) => async (dispatch, getState) => {
       type: UPDATE_USER_SUCCESS,
       payload: userProfile,
     })
-    let localData = localStorage.getItem('userInfo')
-    localStorage.setItem('userInfo', JSON.stringify({
-      ...localData,
-      ...userProfile
-    }))
+
   } catch (error) {
     console.log(error)
     dispatch({

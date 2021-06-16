@@ -25,10 +25,7 @@ function Alert(props) {
 
 const UserDetailsScreen = () => {
   const dispatch = useDispatch()
-  const { loading, error, company } = useSelector(
-    (state) => state.userLogin.userInfo
-  )
-  // const [businessName, setBusinessName] = useState()
+  const { loading, error, company } = useSelector((state) => state.userLogin.userInfo)
   const [name, setName] = useState()
   const [nip, setNip] = useState()
   const [street, setStreet] = useState()
@@ -45,9 +42,6 @@ const UserDetailsScreen = () => {
 
   const [showPassword, setShowPassword] = useState(false)
 
-  const handleSubmit = () => {
-    console.log('sumbit')
-  }
 
   const handleClickShowPassword = () => {
     setShowPassword(!showPassword)
@@ -130,11 +124,11 @@ const UserDetailsScreen = () => {
 
   return (
     <div>
-      <Snackbar open={showSnackbar} autoHideDuration={2000} onClose={handleCloseSnackbar}>
+      {/* <Snackbar open={showSnackbar} autoHideDuration={2000} onClose={handleCloseSnackbar}>
         <Alert onClose={handleCloseSnackbar} severity={error ? 'error' : 'success'}>
           {message} 
         </Alert>
-      </Snackbar>
+      </Snackbar> */}
 
       {loading ? (
         <CircularProgress />

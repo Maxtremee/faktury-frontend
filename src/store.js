@@ -12,7 +12,7 @@ const reducer = combineReducers({
   contractors: contractorReducer,
   products: productReducer,
   invoices: invoiceReducer,
-}) //all reducers combined
+})
 
 const userInfoFromStorage = localStorage.getItem('userInfo')
   ? JSON.parse(localStorage.getItem('userInfo'))
@@ -20,7 +20,7 @@ const userInfoFromStorage = localStorage.getItem('userInfo')
 
 const initialState = {
   userLogin: { userInfo: userInfoFromStorage },
-} //when store loads - states
+}
 
 const middleware = [thunk]
 

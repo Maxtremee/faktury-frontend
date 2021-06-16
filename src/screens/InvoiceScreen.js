@@ -109,6 +109,7 @@ const InvoiceScreen = ({ history }) => {
                   <TableHead>
                     <TableRow>
                       <TableCell align='center'>Numer faktury</TableCell>
+                      <TableCell align='center'>Klient</TableCell>
                       <TableCell align='center'>Data wystawienia</TableCell>
                       <TableCell align='center'>Wartość netto</TableCell>
                       <TableCell align='center'>Wartość brutto</TableCell>
@@ -120,6 +121,7 @@ const InvoiceScreen = ({ history }) => {
                       invoices.map((invoice, index) => (
                         <TableRow key={index}>
                           <TableCell align='center'>{invoice.title}</TableCell>
+                          <TableCell align='center'>{invoice.contractor.name}</TableCell>
                           <TableCell align='center'>
                             {dayjs(invoice.issueDate).format('DD-MM-YYYY')}
                           </TableCell>

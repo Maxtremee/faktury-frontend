@@ -38,7 +38,11 @@ import {
 } from '../utils/numberFormat'
 import { getContractors } from '../actions/contractorActions'
 import { getProducts } from '../actions/productActions'
-import { createInvoice, getInvoiceDetails } from '../actions/invoiceActions'
+import {
+  createInvoice,
+  getInvoiceDetails,
+  editInvoice,
+} from '../actions/invoiceActions'
 import AddIcon from '@material-ui/icons/Add'
 import DeleteIcon from '@material-ui/icons/Delete'
 import EditIcon from '@material-ui/icons/Edit'
@@ -93,7 +97,7 @@ const AddInvoiceScreen = ({ history }) => {
     dispatch(getContractors())
     dispatch(getProducts())
   }, [])
-  
+
   const [edit, setEdit] = useState(false)
   const [buttonText, setButtonText] = useState('Zapisz produkt')
   //buyer
@@ -107,16 +111,19 @@ const AddInvoiceScreen = ({ history }) => {
   const [buyerBankName, setBuyerBankName] = useState()
   const [buyerPhoneNumber, setBuyerPhoneNumber] = useState()
   const [buyerEmail, setBuyerEmail] = useState()
-  
-  const [invoiceNumber, setInvoiceNumber] = useState() // add default number based on current date
-  const [issueDate, setIssueDate] = useState(dayjs().format('YYYY-MM-DD')) // add default today
+
+  const [title, setTitle] = useState()
+  const [issueDate, setIssueDate] = useState(dayjs().format('YYYY-MM-DD'))
   const [issuePlace, setIssuePlace] = useState(`${company.address.city}`)
-  const [transactionDate, setTransactionDate] = useState(dayjs().format('YYYY-MM-DD'))
-  // seller
+  const [transactionDate, setTransactionDate] = useState(
+    dayjs().format('YYYY-MM-DD')
+  )
   const [sellerName, setSellerName] = useState(company.name)
   const [sellerNip, setSellerNip] = useState(company.nip)
   const [sellerStreet, setSellerStreet] = useState(company.address.street)
-  const [sellerPostalCode, setSellerPostalCode] = useState(company.address.postalCode)
+  const [sellerPostalCode, setSellerPostalCode] = useState(
+    company.address.postalCode
+  )
   const [sellerCity, setSellerCity] = useState(company.address.city)
   const [sellerAccount, setSellerAccount] = useState(company.bankAccountNumber)
   const [sellerBank, setSellerBank] = useState(company.bankName)
@@ -125,10 +132,11 @@ const AddInvoiceScreen = ({ history }) => {
     const [lastItem] = history.location.pathname.split('/').slice(-1)
     if (lastItem.length > 18) {
       setEdit(true)
+      setButtonText('Edytuj fakturę')
       dispatch(getInvoiceDetails(lastItem))
     } else {
       setEdit(false)
-      setButtonText('Zapisz produkt')
+      setButtonText('Wystaw fakturę')
     }
   }, [])
 
@@ -142,14 +150,34 @@ const AddInvoiceScreen = ({ history }) => {
       setBuyerCity(editedInvoice.contractor.address.city)
       setBuyerPhoneNumber(editedInvoice.contractor.phoneNumber)
       setBuyerEmail(editedInvoice.contractor.email)
-      setBuyerBankName(editedInvoice.contractor.bankName) 
+      setBuyerBankName(editedInvoice.contractor.bankName)
       setBuyerAccountNumber(editedInvoice.contractor.bankAccountNumber)
-      setButtonText('Edytuj produkt')
+
+      setTitle(editedInvoice.title)
+      setIssueDate(editedInvoice.issueDate)
+      setIssuePlace(editedInvoice.issuePlace)
+      setTransactionDate(editedInvoice.transactionDate)
+
+      let invoiceEntriesTemp = []
+      editedInvoice.products.map((product) => {
+        let netValue = product.quantity * product.price
+        let grossValue = netValue + (netValue * product.tax) / 100
+        invoiceEntriesTemp.push({
+          id: product.id,
+          name: product.name,
+          netPrice: product.price,
+          tax: product.tax,
+          currency: product.currency,
+          unit: product.unit,
+          quantity: product.quantity,
+          netValue,
+          grossValue,
+        })
+      })
+      setInvoiceEntries(invoiceEntriesTemp)
+      setButtonText('Edytuj fakturę')
     }
   }, [editedInvoice, dispatch])
-
-
-  // ! new
 
   const [invoiceEntries, setInvoiceEntries] = useState([])
   const [clientType, setClientType] = useState('business')
@@ -162,7 +190,6 @@ const AddInvoiceScreen = ({ history }) => {
 
   const buyerAutocompleteRef = React.createRef()
 
-  
   const handleModalOpen = () => {
     setEditBuyerData(false)
     setShowModal(true)
@@ -188,7 +215,7 @@ const AddInvoiceScreen = ({ history }) => {
     setTax(parseFloat(productData.tax))
     setNetPrice(productData.price)
   }
-  const addInvoice = () => {
+  const handleSubmit = () => {
     let invoiceProducts = []
     invoiceEntries.map((invoiceEntry) => {
       invoiceProducts.push({
@@ -202,6 +229,7 @@ const AddInvoiceScreen = ({ history }) => {
       })
     })
     let invoice = {
+      id: editedInvoice.id,
       created: new Date(),
       contractor: {
         id: buyerId,
@@ -217,7 +245,7 @@ const AddInvoiceScreen = ({ history }) => {
         bankName: buyerBankName,
         bankAccountNumber: buyerAccountNumber,
       },
-      title: invoiceNumber,
+      title,
       products: invoiceProducts,
       issuePlace,
       issueDate,
@@ -225,24 +253,96 @@ const AddInvoiceScreen = ({ history }) => {
       paymentDate: transactionDate,
       paymentType: 'Płatność gotówką',
     }
-    console.log(invoice)
-    dispatch(createInvoice(invoice))
+    if (edit) {
+      if(invoiceEntries.length != 0) {
+        dispatch(editInvoice(invoice))
+      }
+    } else {
+      console.log(invoice)
+      if(invoiceEntries.length != 0) {
+        dispatch(createInvoice(invoice))
+      }
+    }
+    history.push('/invoices')
   }
-  const showInvoice = () => {
-    console.log(invoiceEntries)
+  // ! INVOICE PRODUCTS
+  const [modalButtonText, setModalButtonText] = useState('Dodaj produkt')
+  const [modalEdit, setModalEdit] = useState(false)
+  const [modalIndex, setModalIndex] = useState()
+
+  const deleteInvoiceEntry = (index) => {
+    if (invoiceEntries.length) {
+      console.log('delete', index)
+      let arr = [...invoiceEntries]
+      arr.splice(index, 1)
+      setInvoiceEntries(arr)
+    }
+  }
+  const editInvoiceEntry = (index) => {
+    console.log('edit', index)
+    setModalIndex(index)
+    setId(invoiceEntries[index].id)
+    setName(invoiceEntries[index].name)
+    setNetValue(invoiceEntries[index].netValue)
+    setGrossValue(invoiceEntries[index].grossValue)
+    setNetPrice(invoiceEntries[index].netPrice)
+    setQuantity(invoiceEntries[index].quantity)
+    setTax(invoiceEntries[index].tax)
+    setModalButtonText('Edytuj produkt')
+    setModalEdit(true)
+    handleModalOpen()
+  }
+  const addInvoiceEntry = () => {
+    console.log('add')
+    setNetPrice('')
+    setQuantity('')
+    setTax('8%')
+    setName('')
+    setModalButtonText('Dodaj produkt')
+    setModalEdit(false)
+    handleModalOpen()
   }
 
-  const handleEdit = (index) => {
-    console.log(index)
-  }
-  const handleDelete = (index) => {
-    console.log(index)
-  }
-  const removeInvoiceEntry = (index) => {
-    let arr = invoiceEntries.filter((entry) => entry.id !== index)
-    setInvoiceEntries(arr)
+  const generateInvoiceNumber = () => {
+    let str1 = dayjs().format('MM/YY')
+    console.log(str1)
+    setTitle(`${invoicesToday}/${str1}`)
   }
 
+  const calculateNewValues = () => {
+    setNetValue(quantity * netPrice)
+    setGrossValue(quantity * (netPrice + (netPrice * tax) / 100))
+  }
+  const handleModalSubmit = () => {
+    let newEntry = {
+      id,
+      name,
+      quantity,
+      netPrice,
+      unit,
+      tax,
+      netValue,
+      grossValue,
+    }
+    if (modalEdit) {
+      let arr = [...invoiceEntries]
+      arr[modalIndex] = newEntry
+      console.log(arr)
+      setInvoiceEntries(arr)
+    } else {
+      let arr = [...invoiceEntries, newEntry]
+      setInvoiceEntries(arr)
+    }
+    setId('')
+    setName('')
+    setQuantity('')
+    setNetPrice('')
+    setUnit('szt.')
+    setTax('')
+    setNetValue('')
+    setGrossValue('')
+    setShowModal(false)
+  }
   const onClientTypeChange = (e) => {
     setClientType(e.target.value)
     setBuyerName('')
@@ -270,39 +370,6 @@ const AddInvoiceScreen = ({ history }) => {
     setBuyerEmail(details.email)
   }
 
-  const generateInvoiceNumber = () => {
-    let str1 = dayjs().format('MM/YY')
-    console.log(str1)
-    setInvoiceNumber(`${invoicesToday}/${str1}`)
-  }
-
-  const calculateNewValues = () => {
-    setNetValue(quantity * netPrice)
-    setGrossValue(quantity * (netPrice + (netPrice * tax) / 100))
-  }
-  const addProductToInvoice = () => {
-    let newEntry = {
-      id,
-      name,
-      quantity,
-      netPrice,
-      unit,
-      tax,
-      netValue,
-      grossValue,
-    }
-    let newInvoiceEntries = [...invoiceEntries, newEntry]
-    setInvoiceEntries(newInvoiceEntries)
-    setId('')
-    setName('')
-    setQuantity('')
-    setNetPrice('')
-    setUnit('szt.')
-    setTax('')
-    setNetValue('')
-    setGrossValue('')
-    setShowModal(false)
-  }
   return (
     <>
       <Fab
@@ -310,38 +377,31 @@ const AddInvoiceScreen = ({ history }) => {
         size='medium'
         color='primary'
         className={classes.fabDown}
-        onClick={addInvoice}
+        onClick={handleSubmit}
       >
         <NoteAddIcon />
-        Wystaw fakturę
+        {buttonText}
       </Fab>
       <Fab
         variant='extended'
         size='medium'
         color='secondary'
         className={classes.fabUp}
-        onClick={handleModalOpen}
+        onClick={addInvoiceEntry}
       >
         <AddIcon />
         Dodaj produkt
       </Fab>
       <Grid container alignItems='center' justify='center' spacing={8} xs={12}>
         <Grid item>
-          <FormControl margin='normal' size='small' variant='outlined'>
-            <InputLabel htmlFor='outlined-adornment-amount'>
-              Numer faktury
-            </InputLabel>
-            <OutlinedInput
-              value={invoiceNumber || ''}
-              onChanged={(e) => setInvoiceNumber(e.target.value)}
-              labelWidth={105}
-              endAdornment={
-                <InputAdornment position='end'>
-                  <AddIcon onClick={generateInvoiceNumber} />
-                </InputAdornment>
-              }
-            />
-          </FormControl>
+          <TextField
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            variant='outlined'
+            size='small'
+            margin='normal'
+            label='Numer faktury'
+          />
         </Grid>
         <Grid item>
           <TextField
@@ -787,7 +847,7 @@ const AddInvoiceScreen = ({ history }) => {
                         <TableRow key={index}>
                           <TableCell align='center'>{entry.name}</TableCell>
                           <TableCell align='center'>
-                            {entry.netPrice} zł
+                            {entry.netPrice.toFixed(2)} zł
                           </TableCell>
                           <TableCell align='center'>
                             <Grid>
@@ -796,17 +856,17 @@ const AddInvoiceScreen = ({ history }) => {
                           </TableCell>
                           <TableCell align='center'>{entry.tax} %</TableCell>
                           <TableCell align='center'>
-                            {entry.netValue} zł
+                            {entry.netValue.toFixed(2)} zł
                           </TableCell>
                           <TableCell align='center'>
-                            {entry.grossValue} zł
+                            {entry.grossValue.toFixed(2)} zł
                           </TableCell>
                           <TableCell align='center'>
                             <div>
                               <Tooltip title='Edytuj'>
                                 <IconButton
                                   aria-label='edit'
-                                  onClick={() => handleEdit(index)}
+                                  onClick={() => editInvoiceEntry(index)}
                                 >
                                   <EditIcon />
                                 </IconButton>
@@ -814,7 +874,7 @@ const AddInvoiceScreen = ({ history }) => {
                               <Tooltip title='Usuń'>
                                 <IconButton
                                   aria-label='delete'
-                                  onClick={() => handleDelete(index)}
+                                  onClick={() => deleteInvoiceEntry(index)}
                                 >
                                   <DeleteIcon />
                                 </IconButton>
@@ -847,7 +907,7 @@ const AddInvoiceScreen = ({ history }) => {
             <Grid item direction='column' xs={12}>
               <Autocomplete
                 freeSolo
-                options={products.map((option) => option.name)}
+                options={products && products.map((option) => option.name)}
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -855,7 +915,6 @@ const AddInvoiceScreen = ({ history }) => {
                     margin='normal'
                     variant='outlined'
                     size='small'
-                    // value={name || ''}
                   />
                 )}
                 // onInput={(e) => setName(e.target.value)}
@@ -957,7 +1016,7 @@ const AddInvoiceScreen = ({ history }) => {
               onChanged={(e) => setGrossValue(e.target.value)}
               // onBlur={changeProductDetails}
             />
-            <Button onClick={addProductToInvoice}>Dodaj produkt</Button>
+            <Button onClick={handleModalSubmit}>{modalButtonText}</Button>
           </Grid>
         </div>
       </Modal>
