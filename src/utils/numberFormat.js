@@ -20,6 +20,27 @@ export const FloatNumbers = (props) => {
   );
 }
 
+export const PhoneNumberFormat = (props) => {
+  const { inputRef, onChange,...other } = props
+  return (
+    <NumberFormat
+      {...other}
+      getInputRef={inputRef}
+
+      format="### ### ###"
+      mask="_"
+      onValueChange={values => {
+        onChange({
+          target: {
+            name: props.name,
+            value: values.value
+          }
+        });
+      }}
+    />
+  );
+}
+
 export const BankFormat = (props) => {
   const { inputRef, onChange,...other } = props
   return (
@@ -49,7 +70,7 @@ export const NipFormat = (props) => {
       {...other}
       getInputRef={inputRef}
 
-      format="##########"
+      format="# # # # # # # # # #"
       mask="_"
       onValueChange={values => {
         onChange({
@@ -59,7 +80,27 @@ export const NipFormat = (props) => {
           }
         });
       }}
-      // isNumericString
+    />
+  );
+}
+
+export const PostalCodeFormat = (props) => {
+  const { inputRef, onChange,...other } = props
+  return (
+    <NumberFormat
+      {...other}
+      getInputRef={inputRef}
+
+      format="##-###"
+      mask="_"
+      onValueChange={values => {
+        onChange({
+          target: {
+            name: props.name,
+            value: values.value
+          }
+        });
+      }}
     />
   );
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Container, Modal } from 'react-bootstrap'
-import { Button, Paper, TextField } from '@material-ui/core'
+import { Snackbar, Button, Paper, TextField } from '@material-ui/core'
 import { makeStyles } from '@material-ui/core/styles'
 import { Link } from 'react-router-dom'
 import { login } from '../actions/userActions'
@@ -16,6 +16,11 @@ import InputLabel from '@material-ui/core/InputLabel'
 import InputAdornment from '@material-ui/core/InputAdornment'
 import FormHelperText from '@material-ui/core/FormHelperText'
 import FormControl from '@material-ui/core/FormControl'
+import MuiAlert from '@material-ui/lab/Alert';
+
+function Alert(props) {
+  return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
 
 const LoginScreen = ({ history, location }) => {
 
@@ -35,11 +40,6 @@ const LoginScreen = ({ history, location }) => {
     }
   }, [history, userInfo, redirect])
 
-  useEffect(() => {
-    if (error != null) {
-      setShowInfoModal(true)
-    }
-  }, [error])
   const submitHandler = (e) => {
     e.preventDefault()
     dispatch(
@@ -58,12 +58,32 @@ const LoginScreen = ({ history, location }) => {
     event.preventDefault()
   }
 
+  const [showSnackbar, setShowSnackbar] = useState(false)
+  const handleCloseSnackbar = () => {
+    setShowSnackbar(false)
+  }
+
+  const handleOpenSnackbar = () => {
+    setShowSnackbar(true)
+  }
+  useEffect(() => {
+    if(error) {
+      handleOpenSnackbar()
+    }
+  }, [error])
+
   return (
     <Container
       className='d-flex flex-column justify-content-center align-items-center'
       style={{ marginTop: '10%' }}
     >
       <h2>Zaloguj się</h2>
+
+      <Snackbar open={showSnackbar} autoHideDuration={2000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity='error'>
+          Błąd logowania.
+        </Alert>
+      </Snackbar>
 
       <FormControl margin='normal' variant='outlined' style={{width: '25%'}}>
         <InputLabel>Email</InputLabel>
@@ -106,27 +126,6 @@ const LoginScreen = ({ history, location }) => {
       <Button style={{ marginTop: '2%' }} color='secondary' href='/register'>
         Nie masz konta? Zarejestruj się
       </Button>
-
-      <Modal
-        show={showInfoModal}
-        onHide={() => setShowInfoModal(false)}
-        backdrop='static'
-        keyboard={false}
-      >
-        <Modal.Header closeButton>
-          <Modal.Title>Info</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Container>
-            <h2>{error}</h2>
-          </Container>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant='secondary' onClick={() => setShowInfoModal(false)}>
-            Ok
-          </Button>
-        </Modal.Footer>
-      </Modal>
     </Container>
   )
 }

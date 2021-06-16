@@ -16,6 +16,8 @@ import {
   GET_CONTRACTOR_DETAILS_SUCCESS,
   GET_CONTRACTOR_DETAILS_FAIL,
 } from '../constants/contractorConstants'
+import { history } from '../App'
+import checkToken from '../utils/checkToken'
 
 export const getContractors = () => async (dispatch, getState) => {
   try {
@@ -23,6 +25,10 @@ export const getContractors = () => async (dispatch, getState) => {
       type: GET_CONTRACTORS_REQUEST,
     })
     const { userInfo } = getState().userLogin
+    if (!checkToken(userInfo.accessToken)) {
+      history.push('/invalidtoken')
+      throw Error('Token invalid')
+    }
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -48,28 +54,29 @@ export const getContractors = () => async (dispatch, getState) => {
   }
 }
 
-export const getContractorDetails = (contractorId) => async(dispatch, getState) => {
-  dispatch({
-    type: GET_CONTRACTOR_DETAILS_REQUEST
-  })
-  try {
-    const {contractors} = getState().contractors
-    const contractor = contractors.filter(c => c.id === contractorId)[0]
+export const getContractorDetails =
+  (contractorId) => async (dispatch, getState) => {
+    dispatch({
+      type: GET_CONTRACTOR_DETAILS_REQUEST,
+    })
+    try {
+      const { contractors } = getState().contractors
+      const contractor = contractors.filter((c) => c.id === contractorId)[0]
 
-    dispatch({
-      type: GET_CONTRACTOR_DETAILS_SUCCESS,
-      payload: contractor
-    })
-  } catch (error) {
-    dispatch({
-      type: GET_CONTRACTOR_DETAILS_FAIL,
-      payload:
-        error.response && error.response.data.message
-          ? error.response.data.message
-          : error.message,
-    })
+      dispatch({
+        type: GET_CONTRACTOR_DETAILS_SUCCESS,
+        payload: contractor,
+      })
+    } catch (error) {
+      dispatch({
+        type: GET_CONTRACTOR_DETAILS_FAIL,
+        payload:
+          error.response && error.response.data.message
+            ? error.response.data.message
+            : error.message,
+      })
+    }
   }
-}
 
 export const addContractor = (contractorData) => async (dispatch, getState) => {
   try {
@@ -77,6 +84,11 @@ export const addContractor = (contractorData) => async (dispatch, getState) => {
       type: ADD_CONTRACTOR_REQUEST,
     })
     const { userInfo } = getState().userLogin
+    if (!checkToken(userInfo.accessToken)) {
+      history.push('/invalidtoken')
+      throw Error('Token invalid')
+    }
+
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -106,6 +118,10 @@ export const editContractor =
         type: EDIT_CONTRACTOR_REQUEST,
       })
       const { userInfo } = getState().userLogin
+      if (!checkToken(userInfo.accessToken)) {
+        history.push('/invalidtoken')
+        throw Error('Token invalid')
+      }
       const config = {
         headers: {
           'Content-Type': 'application/json',
@@ -139,6 +155,10 @@ export const deleteContractor =
         type: DELETE_CONTRACTOR_REQUEST,
       })
       const { userInfo } = getState().userLogin
+      if (!checkToken(userInfo.accessToken)) {
+        history.push('/invalidtoken')
+        throw Error('Token invalid')
+      }
       const config = {
         headers: {
           'Content-Type': 'application/json',
@@ -151,7 +171,7 @@ export const deleteContractor =
       )
       dispatch({
         type: DELETE_CONTRACTOR_SUCCESS,
-        payload: contractorId,
+        payload: contractorId
       })
     } catch (error) {
       dispatch({

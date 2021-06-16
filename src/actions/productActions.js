@@ -1,4 +1,5 @@
 import axios from 'axios'
+import jwt_decode from 'jwt-decode'
 import {
   ADD_PRODUCT_REQUEST,
   ADD_PRODUCT_SUCCESS,
@@ -16,8 +17,10 @@ import {
   GET_PRODUCT_DETAILS_SUCCESS,
   GET_PRODUCT_DETAILS_FAIL,
 } from '../constants/productConstants'
-
+import { history } from '../App'
 import curlize from 'axios-curlirize'
+import checkToken from '../utils/checkToken'
+
 curlize(axios)
 
 export const getProducts = () => async (dispatch, getState) => {
@@ -26,6 +29,10 @@ export const getProducts = () => async (dispatch, getState) => {
       type: GET_PRODUCTS_REQUEST,
     })
     const { userInfo } = getState().userLogin
+    if(!checkToken(userInfo.accessToken)) {
+      history.push('/invalidtoken')
+      throw Error("Token invalid")
+    }
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -80,6 +87,10 @@ export const addProduct = (productData) => async (dispatch, getState) => {
       type: ADD_PRODUCT_REQUEST,
     })
     const { userInfo } = getState().userLogin
+    if(!checkToken(userInfo.accessToken)) {
+      history.push('/invalidtoken')
+      throw Error("Token invalid")
+    }
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -90,14 +101,16 @@ export const addProduct = (productData) => async (dispatch, getState) => {
       ...productData,
       currency: 'PLN',
     }
-    await axios.post(
+    const {data} = await axios.post(
       `${window.env.API_URL}/product`,
       JSON.stringify(product),
       config
     )
+
+    console.log(data)
     dispatch({
       type: ADD_PRODUCT_SUCCESS,
-      payload: product,
+      payload: {...product, ...data}
     })
   } catch (error) {
     dispatch({
@@ -116,6 +129,10 @@ export const editProduct = (productData) => async (dispatch, getState) => {
       type: EDIT_PRODUCT_REQUEST,
     })
     const { userInfo } = getState().userLogin
+    if(!checkToken(userInfo.accessToken)) {
+      history.push('/invalidtoken')
+      throw Error("Token invalid")
+    }
     const config = {
       headers: {
         'Content-Type': 'application/json',
@@ -148,6 +165,10 @@ export const deleteProduct = (productId) => async (dispatch, getState) => {
       type: DELETE_PRODUCT_REQUEST,
     })
     const { userInfo } = getState().userLogin
+    if(!checkToken(userInfo.accessToken)) {
+      history.push('/invalidtoken')
+      throw Error("Token invalid")
+    }
     const config = {
       headers: {
         'Content-Type': 'application/json',

@@ -5,11 +5,14 @@ import { eventReducer } from './reducers/eventReducers'
 import { userLoginReducer } from './reducers/userReducers'
 import { contractorReducer } from './reducers/contractorReducers'
 import { productReducer } from './reducers/productReducer'
+import { invoiceReducer } from './reducers/invoiceReducer'
+
 const reducer = combineReducers({
   userLogin: userLoginReducer,
   contractors: contractorReducer,
   products: productReducer,
-}) //all reducers combined
+  invoices: invoiceReducer,
+})
 
 const userInfoFromStorage = localStorage.getItem('userInfo')
   ? JSON.parse(localStorage.getItem('userInfo'))
@@ -17,7 +20,7 @@ const userInfoFromStorage = localStorage.getItem('userInfo')
 
 const initialState = {
   userLogin: { userInfo: userInfoFromStorage },
-} //when store loads - states
+}
 
 const middleware = [thunk]
 

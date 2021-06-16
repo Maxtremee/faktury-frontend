@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { addContractor, editContractor, getContractorDetails } from '../actions/contractorActions'
+import { BankFormat, PostalCodeFormat, NipFormat } from '../utils/numberFormat'
 import {
+  addContractor,
+  editContractor,
+  getContractorDetails,
+} from '../actions/contractorActions'
+import {
+  InputAdornment,
+  Grid,
   Button,
   TextField,
   Container,
@@ -13,10 +20,10 @@ import {
 } from '@material-ui/core'
 const AddContractorScreen = ({ history }) => {
   const dispatch = useDispatch()
-  const {loading, error, editedContractor } = useSelector(state => state.contractors)
+  const { loading, error, editedContractor } = useSelector(
+    (state) => state.contractors
+  )
   const [name, setName] = useState('')
-  const [surname, setSurname] = useState('')
-  const [businessName, setBusinessName] = useState('')
   const [nip, setNip] = useState('')
 
   const [street, setStreet] = useState('')
@@ -30,9 +37,11 @@ const AddContractorScreen = ({ history }) => {
   const [edit, setEdit] = useState(false)
   const [buttonText, setButtonText] = useState('Dodaj kontrahenta')
 
+  const [additionalInfo, setAdditionalInfo] = useState(false)
+
   const debug = () => {
     setStreet('Cegelniana 13')
-    setBusinessName('FH Wrobel')
+    setName('FH Wrobel')
     setNip('1231313312')
     setCity('Krakow')
     setPostalCode('23-131')
@@ -53,54 +62,61 @@ const AddContractorScreen = ({ history }) => {
       setButtonText('Zapisz kontrahenta')
     }
   }, [])
+
   useEffect(() => {
     if (editedContractor && editedContractor.name) {
       console.log('edit')
       setName(editedContractor.name)
-      setSurname(editedContractor.surname)
-      setEmail(editedContractor.email)
-      setPhoneNumber(editedContractor.phoneNumber)
-      setAccountNumber(editedContractor.accountNumber)
-      setBankName(editedContractor.bankName)
-      setStreet(editedContractor.street)
-      setBusinessName(editedContractor.businessName)
       setNip(editedContractor.nip)
-      setCity(editedContractor.city)
-      setPostalCode(editedContractor.postalCode)
+      setAccountNumber(editedContractor.bankAccountNumber)
+      setBankName(editedContractor.bankName)
+      setStreet(editedContractor.address.street)
+      setCity(editedContractor.address.city)
+      setPostalCode(editedContractor.address.postalCode)
+      setPhoneNumber(editedContractor.phoneNumber)
+      setEmail(editedContractor.email)
 
       setButtonText('Edytuj kontrahenta')
     }
   }, [editedContractor, dispatch])
   const handleSubmit = () => {
-    if(edit) {
-      dispatch(editContractor({
-        // name,
-        // surname,
-        id: editedContractor.id,
-        name: businessName,
-        nip,
-        firstAddressLine: `${street}, ${postalCode} ${city}`,
-        secondAddressLine: ``,
-        info: `${phoneNumber !== '' ? 'tel. ' + phoneNumber : ''}, ${
-          email !== '' ? 'email: ' + email : ''
-        }`,
-        bankName: ``,
-        bankAccountNumber: ``,
-      }))
+    if (edit) {
+      dispatch(
+        editContractor({
+          id: editedContractor.id,
+          name,
+          nip,
+          address: {
+            street,
+            postalCode,
+            city,
+          },
+          phoneNumber,
+          email,
+          bankName,
+          bankAccountNumber: accountNumber.startsWith('PL')
+            ? accountNumber
+            : `PL${accountNumber}`,
+        })
+      )
+      setEdit(false)
+      setButtonText('Zapisz produkt')
     } else {
       dispatch(
         addContractor({
-          // name,
-          // surname,
-          name: businessName,
+          name,
           nip,
-          firstAddressLine: `${street}, ${postalCode} ${city}`,
-          secondAddressLine: ``,
-          info: `${phoneNumber !== '' ? 'tel. ' + phoneNumber : ''}, ${
-            email !== '' ? 'email: ' + email : ''
-          }`,
-          bankName: ``,
-          bankAccountNumber: ``,
+          address: {
+            street,
+            postalCode,
+            city,
+          },
+          phoneNumber,
+          email,
+          bankName,
+          bankAccountNumber: accountNumber.startsWith('PL')
+            ? accountNumber
+            : `PL${accountNumber}`,
         })
       )
     }
@@ -137,46 +153,48 @@ const AddContractorScreen = ({ history }) => {
             />
           </RadioGroup>
         </FormControl>
-        {clientType === 'private' ? (
-          <div>
-            <TextField
-              fullWidth
-              label='Imię'
-              variant='outlined'
-              margin='normal'
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <TextField
-              fullWidth
-              label='Nazwisko'
-              variant='outlined'
-              margin='normal'
-              value={surname}
-              onChange={(e) => setSurname(e.target.value)}
-            />
-          </div>
-        ) : (
-          <div>
-            <TextField
-              fullWidth
-              label='Nazwa firmy'
-              variant='outlined'
-              margin='normal'
-              value={businessName}
-              onChange={(e) => setBusinessName(e.target.value)}
-            />
-            <TextField
-              margin='normal'
-              fullWidth
-              label='NIP'
-              variant='outlined'
-              value={nip}
-              onChange={(e) => setNip(e.target.value)}
-            />
-          </div>
+        <TextField
+          fullWidth
+          label={clientType === 'business' ? 'Nazwa firmy' : 'Imię'}
+          variant='outlined'
+          margin='normal'
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        {clientType === 'business' && (
+        <TextField
+          margin='normal'
+          fullWidth
+          label='NIP'
+          variant='outlined'
+          value={nip}
+          onChange={(e) => setNip(e.target.value)}
+          InputProps={{
+            inputComponent: NipFormat,
+          }}
+        />
         )}
 
+        <TextField
+          margin='normal'
+          fullWidth
+          label='Numer konta bankowego'
+          variant='outlined'
+          value={accountNumber}
+          onChange={(e) => setAccountNumber(e.target.value)}
+          InputProps={{
+            startAdornment: <InputAdornment position='start'>PL</InputAdornment>,
+            inputComponent: BankFormat,
+          }}
+        />
+        <TextField
+          margin='normal'
+          fullWidth
+          label='Nazwa banku'
+          variant='outlined'
+          value={bankName}
+          onChange={(e) => setBankName(e.target.value)}
+        />
         <TextField
           margin='normal'
           fullWidth
@@ -192,6 +210,9 @@ const AddContractorScreen = ({ history }) => {
           variant='outlined'
           value={postalCode}
           onChange={(e) => setPostalCode(e.target.value)}
+          InputProps={{
+            inputComponent: PostalCodeFormat,
+          }}
         />
         <TextField
           margin='normal'
@@ -201,33 +222,50 @@ const AddContractorScreen = ({ history }) => {
           value={city}
           onChange={(e) => setCity(e.target.value)}
         />
-        <TextField
-          margin='normal'
-          fullWidth
-          label='Numer telefonu'
-          variant='outlined'
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
-        />
-        <TextField
-          margin='normal'
-          fullWidth
-          label='Adres email'
-          variant='outlined'
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <Button
-          margin='normal'
-          variant='outlined'
-          color='primary'
-          onClick={handleSubmit}
-        >
-          Dodaj klienta
-        </Button>
-        <Button variant='outlined' onClick={debug}>
-          FILL DEBUG
-        </Button>
+        {additionalInfo && (
+          <div>
+            <TextField
+              margin='normal'
+              fullWidth
+              label='Numer telefonu'
+              variant='outlined'
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+            />
+            <TextField
+              margin='normal'
+              fullWidth
+              label='Adres email'
+              variant='outlined'
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+        )}
+        <div>
+          <Grid container>
+            <Button onClick={() => setAdditionalInfo(!additionalInfo)}>
+              Dodatkowe informacje
+            </Button>
+          </Grid>
+          <Grid container>
+            <Grid item xs={12} spacing={1}>
+              <Button
+                margin='normal'
+                variant='outlined'
+                color='primary'
+                onClick={handleSubmit}
+              >
+                {buttonText}
+              </Button>
+            </Grid>
+          </Grid>
+          <Grid container>
+            <Button variant='outlined' onClick={debug}>
+              FILL DEBUG
+            </Button>
+          </Grid>
+        </div>
       </Container>
     </div>
   )
