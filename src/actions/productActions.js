@@ -1,5 +1,4 @@
 import axios from 'axios'
-import jwt_decode from 'jwt-decode'
 import {
   ADD_PRODUCT_REQUEST,
   ADD_PRODUCT_SUCCESS,
@@ -18,10 +17,7 @@ import {
   GET_PRODUCT_DETAILS_FAIL,
 } from '../constants/productConstants'
 import { history } from '../App'
-import curlize from 'axios-curlirize'
 import checkToken from '../utils/checkToken'
-
-curlize(axios)
 
 export const getProducts = () => async (dispatch, getState) => {
   try {

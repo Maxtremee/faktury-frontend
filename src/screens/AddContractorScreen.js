@@ -157,22 +157,24 @@ const AddContractorScreen = ({ history }) => {
           fullWidth
           label={clientType === 'business' ? 'Nazwa firmy' : 'Imię'}
           variant='outlined'
+          size='small'
           margin='normal'
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
         {clientType === 'business' && (
-        <TextField
-          margin='normal'
-          fullWidth
-          label='NIP'
-          variant='outlined'
-          value={nip}
-          onChange={(e) => setNip(e.target.value)}
-          InputProps={{
-            inputComponent: NipFormat,
-          }}
-        />
+          <TextField
+            margin='normal'
+            fullWidth
+            label='NIP'
+            variant='outlined'
+            size='small'
+            value={nip}
+            onChange={(e) => setNip(e.target.value)}
+            InputProps={{
+              inputComponent: NipFormat,
+            }}
+          />
         )}
 
         <TextField
@@ -180,10 +182,13 @@ const AddContractorScreen = ({ history }) => {
           fullWidth
           label='Numer konta bankowego'
           variant='outlined'
+          size='small'
           value={accountNumber}
           onChange={(e) => setAccountNumber(e.target.value)}
           InputProps={{
-            startAdornment: <InputAdornment position='start'>PL</InputAdornment>,
+            startAdornment: (
+              <InputAdornment position='start'>PL</InputAdornment>
+            ),
             inputComponent: BankFormat,
           }}
         />
@@ -191,6 +196,7 @@ const AddContractorScreen = ({ history }) => {
           margin='normal'
           fullWidth
           label='Nazwa banku'
+          size='small'
           variant='outlined'
           value={bankName}
           onChange={(e) => setBankName(e.target.value)}
@@ -199,6 +205,7 @@ const AddContractorScreen = ({ history }) => {
           margin='normal'
           fullWidth
           label='Ulica i nr.domu'
+          size='small'
           variant='outlined'
           value={street}
           onChange={(e) => setStreet(e.target.value)}
@@ -207,6 +214,7 @@ const AddContractorScreen = ({ history }) => {
           margin='normal'
           fullWidth
           label='Kod pocztowy'
+          size='small'
           variant='outlined'
           value={postalCode}
           onChange={(e) => setPostalCode(e.target.value)}
@@ -218,6 +226,7 @@ const AddContractorScreen = ({ history }) => {
           margin='normal'
           fullWidth
           label='Miasto'
+          size='small'
           variant='outlined'
           value={city}
           onChange={(e) => setCity(e.target.value)}
@@ -228,6 +237,7 @@ const AddContractorScreen = ({ history }) => {
               margin='normal'
               fullWidth
               label='Numer telefonu'
+              size='small'
               variant='outlined'
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
@@ -236,6 +246,7 @@ const AddContractorScreen = ({ history }) => {
               margin='normal'
               fullWidth
               label='Adres email'
+              size='small'
               variant='outlined'
               value={email}
               onChange={(e) => setEmail(e.target.value)}

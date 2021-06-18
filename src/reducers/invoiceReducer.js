@@ -37,12 +37,11 @@ export const invoiceReducer = (state = { invoices: [] }, action) => {
       return { ...state, error: action.payload }
 
     case DELETE_INVOICE_REQUEST:
-      return { ...state, loading: true }
+      return { ...state}
     case DELETE_INVOICE_SUCCESS:
       return {
         ...state,
-        loading: false,
-        invoices: [...state.invoices.filter((i, _) => i.id != action.payload)],
+        invoices: [...state.invoices.filter((i, _) => i.id !== action.payload)],
       }
     case DELETE_INVOICE_FAIL:
       return { ...state, error: action.payload }
@@ -53,7 +52,7 @@ export const invoiceReducer = (state = { invoices: [] }, action) => {
         ...state,
         invoices: [
           ...state.invoices.map((i, _) =>
-            i.id == action.payload.id ? action.payload : i
+            i.id === action.payload.id ? action.payload : i
           ),
         ],
         editedInvoice: {} 

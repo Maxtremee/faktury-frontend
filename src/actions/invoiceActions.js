@@ -1,5 +1,4 @@
 import axios from 'axios'
-import jwt_decode from 'jwt-decode'
 import {
   GET_INVOICES_REQUEST,
   GET_INVOICES_SUCCESS,
@@ -20,12 +19,9 @@ import {
   CREATE_INVOICE_SUCCESS,
   CREATE_INVOICE_FAIL,
 } from '../constants/invoiceConstants'
-import curlize from 'axios-curlirize'
 import checkToken from '../utils/checkToken'
 import { history } from '../App'
-import download from 'downloadjs'
 
-curlize(axios)
 export const getInvoices = () => async (dispatch, getState) => {
   try {
     dispatch({
@@ -60,7 +56,6 @@ export const getInvoices = () => async (dispatch, getState) => {
     })
   }
 }
-
 
 export const getInvoicePdf = (invoiceId) => async (dispatch, getState) => {
   dispatch({

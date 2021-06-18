@@ -1,6 +1,5 @@
-import React, { useState, forwardRef, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { ListGroup, Form, Row, Col, Container } from 'react-bootstrap'
 import {
   Fab,
   Grid,
@@ -25,9 +24,6 @@ import {
   FormControlLabel,
   Radio,
   FormLabel,
-  OutlinedInput,
-  InputLabel,
-  Divider,
 } from '@material-ui/core'
 import {
   BankFormat,
@@ -50,7 +46,6 @@ import NoteAddIcon from '@material-ui/icons/NoteAdd'
 import { Autocomplete } from '@material-ui/lab'
 import dayjs from 'dayjs'
 
-const invoicesToday = 4
 const useStyles = makeStyles((theme) => ({
   paper: {
     position: 'absolute',
@@ -88,6 +83,7 @@ const AddInvoiceScreen = ({ history }) => {
   const { loading, error, editedInvoice } = useSelector(
     (state) => state.invoices
   )
+  const {invoices} =  useSelector((state) => state.invoices)
   const { company } = useSelector((state) => state.userLogin.userInfo)
   const { contractors } = useSelector((state) => state.contractors)
   const { products } = useSelector((state) => state.products)
@@ -113,6 +109,7 @@ const AddInvoiceScreen = ({ history }) => {
   const [buyerEmail, setBuyerEmail] = useState()
 
   const [title, setTitle] = useState()
+  const [paymentType, setPaymentType] = useState('Płatność przelewem')
   const [issueDate, setIssueDate] = useState(dayjs().format('YYYY-MM-DD'))
   const [issuePlace, setIssuePlace] = useState(`${company.address.city}`)
   const [transactionDate, setTransactionDate] = useState(
@@ -141,10 +138,16 @@ const AddInvoiceScreen = ({ history }) => {
   }, [])
 
   useEffect(() => {
+    let date = new Date()
+    let invoiceTitle = `${invoices.length+1}/${date.getMonth()}/${date.getFullYear()}`   
+    setTitle(invoiceTitle)
+  }, [invoices])
+
+  useEffect(() => {
     if (editedInvoice && editedInvoice.id) {
       console.log('edit')
       setBuyerName(editedInvoice.contractor.name)
-      setBuyerNip(editedInvoice.contractor.id)
+      setBuyerNip(editedInvoice.contractor.nip)
       setBuyerStreet(editedInvoice.contractor.address.street)
       setBuyerPostalCode(editedInvoice.contractor.address.postalCode)
       setBuyerCity(editedInvoice.contractor.address.city)
@@ -152,11 +155,16 @@ const AddInvoiceScreen = ({ history }) => {
       setBuyerEmail(editedInvoice.contractor.email)
       setBuyerBankName(editedInvoice.contractor.bankName)
       setBuyerAccountNumber(editedInvoice.contractor.bankAccountNumber)
-
+      
       setTitle(editedInvoice.title)
-      setIssueDate(editedInvoice.issueDate)
+      setIssueDate(dayjs(editedInvoice.issueDate).format('YYYY-MM-DD'))
       setIssuePlace(editedInvoice.issuePlace)
-      setTransactionDate(editedInvoice.transactionDate)
+      setTransactionDate(dayjs(editedInvoice.transactionDate).format('YYYY-MM-DD'))
+      setPaymentType(editedInvoice.paymentType)
+
+      if(!editedInvoice.contractor.nip) {
+        setClientType('private')
+      }
 
       let invoiceEntriesTemp = []
       editedInvoice.products.map((product) => {
@@ -174,6 +182,7 @@ const AddInvoiceScreen = ({ history }) => {
           grossValue,
         })
       })
+      console.log(invoiceEntriesTemp)
       setInvoiceEntries(invoiceEntriesTemp)
       setButtonText('Edytuj fakturę')
     }
@@ -184,7 +193,6 @@ const AddInvoiceScreen = ({ history }) => {
 
   const [buyerMore, setBuyerMore] = useState(false)
   const [editUserData, setEditUserData] = useState(false)
-  const [availableProducts, setAvailableProducts] = useState([])
   const [editBuyerData, setEditBuyerData] = useState(true)
   const [showModal, setShowModal] = useState(false)
 
@@ -229,7 +237,6 @@ const AddInvoiceScreen = ({ history }) => {
       })
     })
     let invoice = {
-      id: editedInvoice.id,
       created: new Date(),
       contractor: {
         id: buyerId,
@@ -248,18 +255,20 @@ const AddInvoiceScreen = ({ history }) => {
       title,
       products: invoiceProducts,
       issuePlace,
-      issueDate,
+      issueDate: issueDate,
       sellDate: transactionDate,
       paymentDate: transactionDate,
-      paymentType: 'Płatność gotówką',
+      paymentType,
     }
     if (edit) {
-      if(invoiceEntries.length != 0) {
-        dispatch(editInvoice(invoice))
+      let invoiceWithId = {...invoice, id: editedInvoice.id}
+
+      if(invoiceEntries.length !== 0) {
+        dispatch(editInvoice(invoiceWithId))
       }
     } else {
       console.log(invoice)
-      if(invoiceEntries.length != 0) {
+      if(invoiceEntries.length !== 0) {
         dispatch(createInvoice(invoice))
       }
     }
@@ -287,6 +296,7 @@ const AddInvoiceScreen = ({ history }) => {
     setGrossValue(invoiceEntries[index].grossValue)
     setNetPrice(invoiceEntries[index].netPrice)
     setQuantity(invoiceEntries[index].quantity)
+    setUnit(invoiceEntries[index].unit)
     setTax(invoiceEntries[index].tax)
     setModalButtonText('Edytuj produkt')
     setModalEdit(true)
@@ -296,17 +306,11 @@ const AddInvoiceScreen = ({ history }) => {
     console.log('add')
     setNetPrice('')
     setQuantity('')
-    setTax('8%')
+    setTax('8')
     setName('')
     setModalButtonText('Dodaj produkt')
     setModalEdit(false)
     handleModalOpen()
-  }
-
-  const generateInvoiceNumber = () => {
-    let str1 = dayjs().format('MM/YY')
-    console.log(str1)
-    setTitle(`${invoicesToday}/${str1}`)
   }
 
   const calculateNewValues = () => {
@@ -369,7 +373,18 @@ const AddInvoiceScreen = ({ history }) => {
     setBuyerPhoneNumber(details.phoneNumber)
     setBuyerEmail(details.email)
   }
-
+  const getAutocompleteOptions = () => {
+    let result = []
+    contractors.map((contractor) => {
+      if(clientType === 'business' && contractor.nip) {
+        result.push(contractor)
+      }
+      else if (clientType ===  'private' && !contractor.nip) {
+        result.push(contractor.name)
+      }
+    })
+    return result
+  }
   return (
     <>
       <Fab
@@ -392,7 +407,7 @@ const AddInvoiceScreen = ({ history }) => {
         <AddIcon />
         Dodaj produkt
       </Fab>
-      <Grid container alignItems='center' justify='center' spacing={8} xs={12}>
+      <Grid container alignItems='center' justify='center' spacing={5} xs={12}>
         <Grid item>
           <TextField
             value={title}
@@ -402,6 +417,18 @@ const AddInvoiceScreen = ({ history }) => {
             margin='normal'
             label='Numer faktury'
           />
+        </Grid>
+        <Grid item>
+          <FormControl fullWidth variant='outlined' margin='normal' size='small'>
+            <Select
+              labelId='Rodzaj płatności'
+              value={paymentType || ''}
+              onChange={(e) => setPaymentType(e.target.value)}
+            >
+              <MenuItem value={'Płatność gotówką'}>Płatność gotówką</MenuItem>
+              <MenuItem value={'Płatność przelewem'}>Płatność przelewem</MenuItem>
+            </Select>
+          </FormControl>
         </Grid>
         <Grid item>
           <TextField
@@ -565,7 +592,7 @@ const AddInvoiceScreen = ({ history }) => {
                   <Grid item xs={5}>
                     <h5>
                       {company.address.street}
-                      {company.address.street.length != 0 ? ',' : ''}{' '}
+                      {company.address.street.length !== 0 ? ',' : ''}{' '}
                       {company.address.postalCode} {company.address.city}
                     </h5>
                   </Grid>
@@ -576,7 +603,7 @@ const AddInvoiceScreen = ({ history }) => {
                   </Grid>
                   <Grid item xs={5}>
                     <h5>
-                      {company.phoneNumber.length != 0 ? '+48' : ''}{' '}
+                      {company.phoneNumber.length !== 0 ? '+48' : ''}{' '}
                       {company.phoneNumber}
                     </h5>
                   </Grid>
@@ -631,6 +658,7 @@ const AddInvoiceScreen = ({ history }) => {
                 options={
                   contractors && contractors.map((option) => option.name)
                 }
+                value={buyerName || ''}
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -642,7 +670,6 @@ const AddInvoiceScreen = ({ history }) => {
                     margin='normal'
                     variant='outlined'
                     size='small'
-                    value={buyerName}
                   />
                 )}
                 onInput={(e) => setBuyerName(e.target.value)}
@@ -676,7 +703,7 @@ const AddInvoiceScreen = ({ history }) => {
               />
 
               <Grid container spacing={3} direction='row'>
-                <Grid item xs={4}>
+                <Grid item xs={5}>
                   <TextField
                     fullWidth
                     label='Kod pocztowy'
@@ -690,7 +717,7 @@ const AddInvoiceScreen = ({ history }) => {
                     }}
                   />
                 </Grid>
-                <Grid item xs={8}>
+                <Grid item xs={7}>
                   <TextField
                     fullWidth
                     label='Miasto'
@@ -908,6 +935,7 @@ const AddInvoiceScreen = ({ history }) => {
               <Autocomplete
                 freeSolo
                 options={products && products.map((option) => option.name)}
+                value={name || ''}
                 renderInput={(params) => (
                   <TextField
                     {...params}
@@ -917,12 +945,11 @@ const AddInvoiceScreen = ({ history }) => {
                     size='small'
                   />
                 )}
-                // onInput={(e) => setName(e.target.value)}
+                onInput={(e) => setName(e.target.value)}
                 onChange={(e, _) =>
                   e.target.className === 'MuiAutocomplete-option' &&
                   setProductCompletion(e.target.dataset.optionIndex)
                 }
-                // onBlur={changeProductDetails}
               />
             </Grid>
             <TextField
@@ -943,9 +970,9 @@ const AddInvoiceScreen = ({ history }) => {
             >
               <Select
                 labelId='Jednostka'
+                displayEmpty
                 value={unit || ''}
                 onChange={(e) => setUnit(e.target.value)}
-                // onBlur={changeProductDetails}
               >
                 <MenuItem value={'szt.'}>szt.</MenuItem>
                 <MenuItem value={'kg'}>kg</MenuItem>
@@ -997,8 +1024,7 @@ const AddInvoiceScreen = ({ history }) => {
                   <InputAdornment position='end'>zł</InputAdornment>
                 ),
               }}
-              onChanged={(e) => setNetValue(e.target.value)}
-              // onBlur={changeProductDetails}
+              onChange={(e) => setNetValue(e.target.value)}
             />
             <TextField
               disabled
@@ -1013,8 +1039,7 @@ const AddInvoiceScreen = ({ history }) => {
                   <InputAdornment position='end'>zł</InputAdornment>
                 ),
               }}
-              onChanged={(e) => setGrossValue(e.target.value)}
-              // onBlur={changeProductDetails}
+              onChange={(e) => setGrossValue(e.target.value)}
             />
             <Button onClick={handleModalSubmit}>{modalButtonText}</Button>
           </Grid>

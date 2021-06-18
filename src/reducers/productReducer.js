@@ -36,12 +36,11 @@ export const productReducer = (state = { products: [] }, action) => {
       return { ...state, error: action.payload }
 
     case DELETE_PRODUCT_REQUEST:
-      return { ...state, loading: true }
+      return { ...state}
     case DELETE_PRODUCT_SUCCESS:
       return {
         ...state,
-        loading: false,
-        products: [...state.products.filter((i, _) => i.id != action.payload)],
+        products: [...state.products.filter((i, _) => i.id !== action.payload)],
       }
     case DELETE_PRODUCT_FAIL:
       return { ...state, error: action.payload }
@@ -52,7 +51,7 @@ export const productReducer = (state = { products: [] }, action) => {
         ...state,
         products: [
           ...state.products.map((i, _) =>
-            i.id == action.payload.id ? action.payload : i
+            i.id === action.payload.id ? action.payload : i
           ),
         ],
         editedProduct: {} 

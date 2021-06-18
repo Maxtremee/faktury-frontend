@@ -37,13 +37,12 @@ export const contractorReducer = (state = { contractors: [] }, action) => {
       return { ...state, error: action.payload }
 
     case DELETE_CONTRACTOR_REQUEST:
-      return { ...state, loading: true }
+      return { ...state }
     case DELETE_CONTRACTOR_SUCCESS:
       return {
         ...state,
-        loading: false,
         contractors: [
-          ...state.contractors.filter((i, _) => i.id != action.payload),
+          ...state.contractors.filter((i, _) => i.id !== action.payload),
         ],
       }
     case DELETE_CONTRACTOR_FAIL:
@@ -55,7 +54,7 @@ export const contractorReducer = (state = { contractors: [] }, action) => {
         ...state,
         contractors: [
           ...state.contractors.map((i, _) =>
-            i.id == action.payload.id ? action.payload : i
+            i.id === action.payload.id ? action.payload : i
           ),
         ],
         editedContractor: {}

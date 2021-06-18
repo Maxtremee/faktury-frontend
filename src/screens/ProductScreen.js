@@ -41,17 +41,19 @@ const useStyles = makeStyles({
 const ProductScreen = ({ history }) => {
   const dispatch = useDispatch()
   const { products, loading, error } = useSelector((state) => state.products)
+  const { userInfo } = useSelector((state) => state.userLogin)
 
   useEffect(() => {
-    dispatch(getProducts())
-  }, [])
+    if(!userInfo) {
+      history.push('/login')
+      return
+    }
+    else {
+      dispatch(getProducts())
+    }
+  }, [userInfo])
 
   const classes = useStyles()
-
-  const productDetails = (productId) => {
-    //TODO disptach
-    console.log(productId)
-  }
 
   const addNewProduct = () => {
     history.push('/products/add')
@@ -94,6 +96,7 @@ const ProductScreen = ({ history }) => {
                     <TableRow>
                       <TableCell align='center'>Nazwa produktu</TableCell>
                       <TableCell align='center'>Cena netto</TableCell>
+                      <TableCell align='center'>Jednostka</TableCell>
                       <TableCell align='center'>VAT</TableCell>
                       <TableCell align='center'>Cena brutto</TableCell>
                       <TableCell align='left'></TableCell>
@@ -104,8 +107,9 @@ const ProductScreen = ({ history }) => {
                       <TableRow key={index}>
                         <TableCell align='center'>{product.name}</TableCell>
                         <TableCell align='center'>
-                          {parseFloat(product.price).toFixed(2)} zł
+                          {parseFloat(product.price).toFixed(2)} zł 
                         </TableCell>
+                        <TableCell align='center'>{product.unit}</TableCell>
                         <TableCell align='center'>{product.tax}%</TableCell>
                         <TableCell align='center'>
                           {parseFloat(
