@@ -39,18 +39,18 @@ const RegisterScreen = ({ history }) => {
   const [showPassword, setShowPassword] = useState(false)
 
   const fillFieldsDebug = () => {
-    setLogin('michal@email.com')
+    setLogin('email@email.com')
     setPassword('pass')
     setRepeatPassword('pass')
-    setName('FH Frytka')
+    setName('FH. Nowak')
     setCity('Wrocław')
     setPostalCode('12311')
     setStreet('ul. Główna')
     setNip('1123133211')
     setPhoneNumber('111 222 333')
-    setBankName('Bank Polski')
-    setBankAccountNumber('1231231312313123123131323')
-    setEmail('michal@email.com')
+    setBankName('Pekao')
+    setBankAccountNumber('12215313723631298838313453')
+    setEmail('email@email.com')
   }
 
   const registerAccountHandler = (event) => {
@@ -61,17 +61,17 @@ const RegisterScreen = ({ history }) => {
       password,
       company: {
         name,
+        nip,
+        phoneNumber,
+        email,
+        bankName,
+        bankAccountNumber,
         address: {
           street,
           postalCode,
           city
         }
       },
-      nip,
-      phoneNumber,
-      email,
-      bankName,
-      bankAccountNumber
     }))
     history.push('/login')
   }

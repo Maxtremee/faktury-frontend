@@ -17,10 +17,6 @@ import {
 } from '../constants/userConstants'
 
 import env from 'react-dotenv'
-import curlirize from 'axios-curlirize'
-
-curlirize(axios)
-
 
 export const login = ({ email, password }) => async (dispatch) => {
   try {
@@ -33,12 +29,11 @@ export const login = ({ email, password }) => async (dispatch) => {
         'accept': 'application/json'
       },
     }
-    const { data } = await axios.post(
+    const {data} = await axios.post(
       `${env.API_URL}/login`,
       JSON.stringify({login: email, password}),
       config
     )
-    console.log(data)
     dispatch({
       type: USER_LOGIN_SUCCESS,
       payload: data,
@@ -65,7 +60,8 @@ export const registerAccount = (accountData) => async (dispatch) => {
         'accept': 'application/json'
       },
     }
-    const { data } = await axios.post(
+    
+    await axios.post(
       `${env.API_URL}/signup`,
       JSON.stringify(accountData),
       config

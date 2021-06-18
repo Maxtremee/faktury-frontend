@@ -73,8 +73,9 @@ const MenuAppBar = ({ history }) => {
             Faktury
           </Typography>
           <div>
-            {menuItems.map(menuItem => (
+            {menuItems.map(( menuItem, index ) => (
               <Button
+              key={index}
               variant='contained'
               disableElevation
               color='primary'

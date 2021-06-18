@@ -48,9 +48,17 @@ const InvoiceScreen = ({ history }) => {
   const dispatch = useDispatch()
   const theme = useTheme()
   const { loading, error, invoices } = useSelector((state) => state.invoices)
+  const { userInfo } = useSelector((state) => state.userLogin)
+
   useEffect(() => {
-    dispatch(getInvoices())
-  }, [])
+    if(!userInfo) {
+      history.push('/login')
+      return
+    }
+    else {
+      dispatch(getInvoices())
+    }
+  }, [userInfo])
 
   const handleDelete = (index) => {
     const id = invoices[index].id
@@ -98,7 +106,7 @@ const InvoiceScreen = ({ history }) => {
       </Fab>
       {loading ? (
         <div>
-          Ładowanie... <CircularProgress />
+          <h4>Ładowanie...</h4> <CircularProgress />
         </div>
       ) : (
         <div>

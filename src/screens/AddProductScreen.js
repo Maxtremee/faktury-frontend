@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { Container, Row, Col, Modal } from 'react-bootstrap'
 import {
+  InputAdornment,
+  Container,
   Button,
   FormControl,
   Select,
   MenuItem,
   FormLabel,
 } from '@material-ui/core'
-import { login } from '../actions/userActions'
 import TextField from '@material-ui/core/TextField'
 import {
   addProduct,
@@ -21,19 +21,23 @@ const AddNewProductScreen = ({ history }) => {
     (state) => state.products
   )
   const [name, setName] = useState('')
-  const [tax, setTax] = useState('')
+  const [tax, setTax] = useState('8')
   const [price, setPrice] = useState('')
   const [unit, setUnit] = useState('szt.')
   const [buttonText, setButtonText] = useState('Zapisz produkt')
   const [edit, setEdit] = useState(false)
   const handleSubmit = () => {
+    let netPrice = price
+    if(netPrice.includes(',')) {
+      netPrice = netPrice.replace(',', '.')
+    }
     if (edit) {
       dispatch(
         editProduct({
           id: editedProduct.id,
           name,
           tax: parseInt(tax),
-          price: parseFloat(price),
+          price: parseFloat(netPrice),
           currency: 'PLN',
           unit,
         })
@@ -45,7 +49,7 @@ const AddNewProductScreen = ({ history }) => {
         addProduct({
           name,
           tax: parseInt(tax),
-          price: parseFloat(price),
+          price: parseFloat(netPrice),
           unit,
         })
       )
@@ -72,7 +76,8 @@ const AddNewProductScreen = ({ history }) => {
       setUnit(editedProduct.unit)
       setButtonText('Edytuj produkt')
     }
-  }, [editedProduct, dispatch])
+  }, [editedProduct])
+
   return (
     <div>
       <Container
@@ -88,26 +93,30 @@ const AddNewProductScreen = ({ history }) => {
           fullWidth
           label='Nazwa produktu'
           variant='outlined'
+          size='small'
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
-        <TextField
-          margin='normal'
-          fullWidth
-          label='VAT'
-          variant='outlined'
-          value={tax}
-          onChange={(e) => setTax(e.target.value)}
-        />
+        <FormControl fullWidth variant='outlined' margin='normal' size='small'>
+          <Select
+            labelId='VAT'
+            value={tax || ''}
+            onChange={(e) => setTax(e.target.value)}
+          >
+            <MenuItem value={8}>8%</MenuItem>
+            <MenuItem value={23}>23%</MenuItem>
+          </Select>
+        </FormControl>
         <TextField
           margin='normal'
           fullWidth
           label='Cena netto'
+          size='small'
           variant='outlined'
           value={price}
           onChange={(e) => setPrice(e.target.value)}
         />
-        <FormControl fullWidth variant='outlined' margin='normal'>
+        <FormControl fullWidth variant='outlined' margin='normal' size='small'>
           <FormLabel variant='outlined'>Jednostka miary</FormLabel>
           <Select
             labelId='Jednostka miary'

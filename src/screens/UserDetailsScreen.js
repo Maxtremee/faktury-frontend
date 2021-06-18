@@ -23,9 +23,28 @@ function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
 }
 
-const UserDetailsScreen = () => {
+const UserDetailsScreen = ({history}) => {
   const dispatch = useDispatch()
-  const { loading, error, company } = useSelector((state) => state.userLogin.userInfo)
+  const { userInfo } = useSelector((state) => state.userLogin)
+
+  useEffect(() => {
+    if(!userInfo) {
+      history.push('/login')
+      return
+    }
+    else {
+      setName(userInfo.company.name)
+      setNip(userInfo.company.nip)
+      setStreet(userInfo.company.address.street)
+      setPostalCode(userInfo.company.address.postalCode)
+      setCity(userInfo.company.address.city)
+      setBankAccountNumber(userInfo.company.bankAccountNumber)
+      setBankName(userInfo.company.bankName)
+      setPhoneNumber(userInfo.company.phoneNumber)
+      setEmail(userInfo.company.email)
+    }
+  }, [userInfo])
+
   const [name, setName] = useState()
   const [nip, setNip] = useState()
   const [street, setStreet] = useState()
@@ -50,19 +69,6 @@ const UserDetailsScreen = () => {
   const handleMouseDownPassword = (event) => {
     event.preventDefault()
   }
-  useEffect(() => {
-    if (company) {
-      setName(company.name)
-      setNip(company.nip)
-      setStreet(company.address.street)
-      setPostalCode(company.address.postalCode)
-      setCity(company.address.city)
-      setBankAccountNumber(company.bankAccountNumber)
-      setBankName(company.bankName)
-      setPhoneNumber(company.phoneNumber)
-      setEmail(company.email)
-    }
-  }, [company])
 
   const updateProfileHandler = (event) => {
     event.preventDefault()
@@ -111,16 +117,16 @@ const UserDetailsScreen = () => {
   const handleOpenSnackbar = () => {
     setShowSnackbar(true)
   }
-  useEffect(() => {
-    if(error) {
-      setMessage('Błąd')      
-      handleOpenSnackbar()
-    }
-    else {
-      setMessage('Zmiana przebiegła pomyślnie')
-      handleOpenSnackbar()
-    }
-  }, [dispatch, error])
+  // useEffect(() => {
+  //   if(error) {
+  //     setMessage('Błąd')      
+  //     handleOpenSnackbar()
+  //   }
+  //   else {
+  //     setMessage('Zmiana przebiegła pomyślnie')
+  //     handleOpenSnackbar()
+  //   }
+  // }, [dispatch, error])
 
   return (
     <div>
@@ -130,9 +136,6 @@ const UserDetailsScreen = () => {
         </Alert>
       </Snackbar> */}
 
-      {loading ? (
-        <CircularProgress />
-      ) : (
         <div>
           <Grid container spacing={5} direction='row'>
             <Grid item xs={6} direction='column'>
@@ -336,7 +339,6 @@ const UserDetailsScreen = () => {
             </Grid>
           </Grid>
         </div>
-      )}
     </div>
   )
 }

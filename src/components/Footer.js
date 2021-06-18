@@ -1,5 +1,4 @@
 import React from 'react'
-import { Container, Row } from 'react-bootstrap'
 var style = {
   backgroundColor: '#F8F8F8',
   borderTop: '1px solid #E7E7E7',

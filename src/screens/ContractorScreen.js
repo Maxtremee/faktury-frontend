@@ -45,9 +45,18 @@ const ContractorScreen = ({ history }) => {
   const { contractors, loading, error } = useSelector(
     (state) => state.contractors
   )
+  const { userInfo } = useSelector((state) => state.userLogin)
+
   useEffect(() => {
-    dispatch(getContractors())
-  }, [])
+    if(!userInfo) {
+      history.push('/login')
+      return
+    }
+    else {
+      dispatch(getContractors())
+    }
+  }, [userInfo])
+  
   const classes = useStyles()
 
   const handleAdd = () => {
@@ -101,7 +110,7 @@ const ContractorScreen = ({ history }) => {
                             ? `${contractor.name} ${contractor.surname}`
                             : `${contractor.name}`}
                         </TableCell>
-                        <TableCell align='center'>{contractor.nip}</TableCell>
+                        <TableCell align='center'>{contractor.nip ? contractor.nip : 'Brak'}</TableCell>
                         <TableCell align='center'>
                           <div>
                             <Grid container spacing={1}>
@@ -121,12 +130,12 @@ const ContractorScreen = ({ history }) => {
                           <div>
                             <Grid container spacing={1}>
                               <Grid item xs={12}>
-                                Numer telefonu: {contractor.phoneNumber}
+                                Numer telefonu: {contractor.phoneNumber ? contractor.phoneNumber : 'Brak'}
                               </Grid>
                             </Grid>
                             <Grid container spacing={1}>
                               <Grid item xs={12}>
-                                Email: {contractor.email}
+                                Email: {contractor.email ? contractor.email : 'Brak'}
                               </Grid>
                             </Grid>
                           </div>
